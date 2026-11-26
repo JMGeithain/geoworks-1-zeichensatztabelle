@@ -66,12 +66,16 @@ my $check=object_block(3,{
 },6);
 die "interface block differs from the SDK output\n" unless $check eq $res[3]{data};
 
-my ($fontmenu,$fontmenu_m,$fontmenu_hints)=(0x2a,0x2c,0x2e);
-my @font_items=(['Berkeley',0x0c10],['Roman',0x0c11],['Sans',0x0c12],['Mono',0x0c13]);
-my @font_chunks=map { [0x30+$_*4,0x32+$_*4] } 0..$#font_items;
-my $vh=0x40;
-my $view=$mkview->([$primary_h|1,SAME_BLOCK]);
-$view=$mkview->([$fontmenu,SAME_BLOCK]);
+my ($filemenu,$filemenu_m,$filemenu_hints)=(0x2a,0x2c,0x2e);
+my @file_items=(['Zeichentabelle',0x0c20],['Zeichen kopieren',0x0c21],
+                ['Info',0x0c22],['Hilfe',0x0c23]);
+my @file_chunks=map { [0x30+$_*4,0x32+$_*4] } 0..$#file_items;
+my ($fontmenu,$fontmenu_m,$fontmenu_hints)=(0x40,0x42,0x44);
+my @font_items=(['Berkeley',0x0c10],['Roman',0x0c11],['Sans',0x0c12],['Mono',0x0c13],
+                ['Nächste Schrift',0x0c14],['Vorige Schrift',0x0c15]);
+my @font_chunks=map { [0x46+$_*4,0x48+$_*4] } 0..$#font_items;
+my $vh=0x5e;
+my $view=$mkview->([$filemenu,SAME_BLOCK]);
 set16(\$view,0x18,$vh);
 set16(\$view,0x2e,0xd010);
 set16(\$view,0x42,0x22);
@@ -80,11 +84,21 @@ my %chunks=(
     $primary_h=>[$primary,3],
     $title_h=>[text_moniker($g->{long_name}),2],
     $view_h=>[$view,7],
+    $filemenu=>[base(80,sibling=>[$fontmenu,SAME_BLOCK],child=>[$file_chunks[0][0],SAME_BLOCK],moniker=>$filemenu_m,hints=>$filemenu_hints).pack('C',2),3],
+    $filemenu_m=>[moniker('Datei',0),2],
+    $filemenu_hints=>[pack('vv',0x4005,4),2],
     $fontmenu=>[base(80,sibling=>[$primary_h|1,SAME_BLOCK],child=>[$font_chunks[0][0],SAME_BLOCK],moniker=>$fontmenu_m,hints=>$fontmenu_hints).pack('C',2),3],
     $fontmenu_m=>[moniker('Schrift',5),2],
     $fontmenu_hints=>[pack('vv',0x4005,4),2],
     $vh=>[pack('v4',0x4015,4,0x4014,4),2]
 );
+for my $i (0..$#file_items) {
+    my ($label,$msg)=@{$file_items[$i]};
+    my ($trigger,$mh)=@{$file_chunks[$i]};
+    my $sibling=$i<$#file_items ? [$file_chunks[$i+1][0],SAME_BLOCK] : [$filemenu|1,SAME_BLOCK];
+    $chunks{$trigger}=[base(68,sibling=>$sibling,moniker=>$mh,states=>0xc004).pack('vvv',0x22,0x1005,$msg),7];
+    $chunks{$mh}=[moniker($label,0),2];
+}
 for my $i (0..$#font_items) {
     my ($label,$msg)=@{$font_items[$i]};
     my ($trigger,$mh)=@{$font_chunks[$i]};

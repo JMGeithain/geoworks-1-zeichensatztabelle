@@ -9,10 +9,9 @@ jeweilige GEOS-Zeichencode.
 ## Bedienung
 
 - Zelle mit der Maus oder den Pfeiltasten auswählen.
-- **Schrift F** oder **F** öffnet den Schriftartdialog. Die App liest die
-  installierten `.FNT`-Dateien aus `GEOWORKS\FONT` und zeigt Namen samt
-  Schriftprobe. Mit Pfeil hoch/runter und Enter wählen; Esc schließt den Dialog.
-  Ein Mausklick auf eine Schrift übernimmt sie sofort.
+- **Schrift F** oder **F** öffnet den Schriftartdialog mit Berkeley, Roman,
+  Sans und Mono samt Schriftprobe. Mit Pfeil hoch/runter und Enter wählen;
+  Esc schließt den Dialog. Ein Mausklick auf eine Schrift übernimmt sie sofort.
 - **C** oder **Leertaste** kopiert ein druckbares Zeichen in die Zwischenablage.
 - Steuerzeichen `00`–`1F` und `7F` sind als Code sichtbar und nicht kopierbar.
 

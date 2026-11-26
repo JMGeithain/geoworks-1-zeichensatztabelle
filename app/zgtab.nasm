@@ -1,12 +1,12 @@
-; SPDX-License-Identifier: MIT
-; Copyright 2026 Johannes Moeller
+; SPDX-License-Identifier: Apache-2.0
+; Copyright 2026 Johannes Möller, Syhra
 ; Zeichensatz Tabelle for the Ensemble 1.2 / GeoWorks 1.28 profile.
 ; 16 x 16 GEOS byte table, mouse/keyboard selection, clipboard copy.
 %include "ensemble12.inc"
 %define PROCESS_CLASS 0x40
 %define FONT_DEFAULT 0x0202         ; Berkeley bitmap font
 %define GRID_X 16
-%define GRID_Y 52
+%define GRID_Y 80
 %define CELL_W 32
 %define CELL_H 20
 
@@ -82,12 +82,12 @@ G1_METHOD 0x0004, meta_attach
 G1_METHOD 0x0057, view_closed
 vis_class_table:
  db 'G1VISCLS'
- dw 15
+ dw 13
  dw 0x2071,0x0049,0x007b,0x00c3
- dw 0x0c10,0x0c11,0x0c12,0x0c13,0x0c14,0x0c15
+ dw 0x0c10,0x0c11,0x0c12,0x0c13
  dw 0x0c20,0x0c21,0x0c22,0x0c23,0x0c16
  dw vis_draw,vis_exposed,vis_kbd_char,vis_start_select
- dw choose_berkeley,choose_roman,choose_sans,choose_mono,choose_next,choose_previous
+ dw choose_berkeley,choose_roman,choose_sans,choose_mono
  dw choose_table,choose_copy,choose_info,choose_help,choose_all_fonts
 
 app_open:
@@ -130,18 +130,6 @@ font_changed:
  call redraw
  jmp vis_ret
 
-choose_next:
- VIS_ENTER
- mov ax,1
- jmp font_step
-choose_previous:
- VIS_ENTER
- mov ax,0xffff
-font_step:
- call cycle_font_by
- call redraw
- jmp vis_ret
-
 choose_table:
  VIS_ENTER
  mov word [V_PANEL],0
@@ -167,55 +155,6 @@ choose_all_fonts:
  mov word [V_FDOPEN],1
  call redraw
  jmp vis_ret
-
-cycle_font_by:
- ; AX is +1 for next and -1 for previous in the installed-font snapshot.
- push ax
- xor si,si
-.find_font:
- cmp si,font_count
- jae .wrap
- mov bx,si
- shl bx,1
- shl bx,1
- shl bx,1
- shl bx,1
- shl bx,1
- mov dx,[cs:font_records+bx]
- cmp dx,[V_FONT]
- je .found_font
- inc si
- jmp .find_font
-.found_font:
- pop ax
- cmp ax,1
- jne .previous_font
- inc si
- cmp si,font_count
- jb .set_font
- xor si,si
- jmp .set_font
-.previous_font:
- or si,si
- jnz .decrement_font
- mov si,font_count-1
- jmp .set_font
-.decrement_font:
- dec si
- jmp .set_font
-.wrap:
- pop ax
- xor si,si
-.set_font:
- mov bx,si
- shl bx,1
- shl bx,1
- shl bx,1
- shl bx,1
- shl bx,1
- mov ax,[cs:font_records+bx]
- mov [V_FONT],ax
- ret
 
 view_closed:
  mov word [V_WIN],0
@@ -390,25 +329,14 @@ vis_start_select:
 .font_dialog_check:
  cmp word [V_FDOPEN],0
  jne .font_row
- cmp cx,16
- jb .copy_grid_check
- cmp cx,132
- jae .copy_grid_check
- cmp dx,408
- jb .copy_grid_check
- cmp dx,442
- jae .copy_grid_check
- call copy_selected
- mov ax,0x8000
- jmp vis_ret
 .copy_grid_check:
  cmp cx,450
  jb .grid
- cmp cx,560
+ cmp cx,640
  jae .grid
- cmp dx,4
+ cmp dx,44
  jb .grid
- cmp dx,50
+ cmp dx,72
  jae .grid
  call font_dialog_open
  mov word [V_FDOPEN],1
@@ -685,7 +613,7 @@ paint_table:
  call set_area
  xor ax,ax
  xor bx,bx
- mov cx,560
+ mov cx,640
  mov dx,450
  call fill_rect
 
@@ -694,7 +622,7 @@ paint_table:
  call set_area
  mov ax,12
  mov bx,10
- mov cx,548
+ mov cx,628
  mov dx,42
  call fill_rect
  mov cx,FONT_DEFAULT
@@ -716,6 +644,15 @@ paint_table:
  je .info_page
  cmp word [V_PANEL],2
  je .help_page
+ mov cx,FONT_DEFAULT
+ mov dx,12
+ mov ax,12
+ call set_font
+ mov ax,16
+ mov bx,56
+ mov si,copy_field_label
+ mov cx,copy_field_label_end-copy_field_label
+ call draw_text
  ; The grid shows glyphs only; the selected byte value is shown below.
  mov cx,[V_FONT]
  mov dx,8
@@ -808,7 +745,7 @@ paint_table:
  call set_font
  mov si,status
  mov ax,16
- mov bx,390
+ mov bx,410
  mov cx,status_end-status
  call draw_text
  mov ax,[V_SEL]
@@ -823,7 +760,7 @@ paint_table:
  mov al,[cs:hexchars+bx]
  mov [cs:codebuf+1],al
  mov ax,106
- mov bx,390
+ mov bx,410
  mov si,codebuf
  mov cx,2
  push ds
@@ -842,7 +779,7 @@ paint_table:
  mov ax,22
  call set_font
  mov ax,144
- mov bx,384
+ mov bx,46
  mov si,charbuf
  mov cx,1
  push ds
@@ -857,23 +794,9 @@ paint_table:
  mov dx,10
  mov ax,10
  call set_font
- mov ax,8
- call set_area
- mov ax,16
- mov bx,408
- mov cx,132
- mov dx,442
- call fill_rect
- mov ax,0
- call set_text_color
- mov ax,24
- mov bx,416
- mov si,copy_button
- mov cx,copy_button_end-copy_button
- call draw_text
  mov si,font_label
- mov ax,150
- mov bx,420
+ mov ax,392
+ mov bx,56
  mov cx,font_label_end-font_label
  call draw_text
  xor bx,bx
@@ -901,8 +824,8 @@ paint_table:
  call set_font
  mov si,[V_FDINDEX]
  add si,font_records+2
- mov ax,218
- mov bx,414
+ mov ax,488
+ mov bx,48
  mov cx,20
  call draw_text
  cmp word [V_FDOPEN],0
@@ -941,6 +864,10 @@ paint_info_page:
  mov cx,info_line4_end-info_line4
  call draw_text
  mov bx,198
+ mov si,info_line5
+ mov cx,info_line5_end-info_line5
+ call draw_text
+ mov bx,228
  mov si,build_stamp
  mov cx,build_stamp_end-build_stamp
  call draw_text
@@ -1142,14 +1069,12 @@ charbuf: db 0
 clip_name: db 'Zeichensatz Tabelle',0
 font_title: db 'Weitere Schriften'
 font_title_end:
-build_stamp: db 'Build: 20261126-FONT13'
+build_stamp: db 'Build: 20261126-FONT14'
 build_stamp_end:
-font_label: db 'Schriftart:'
+font_label: db 'Zeichensatz:'
 font_label_end:
 font_hint: db 'Pfeile: Auswahl; Enter: Uebernehmen; Esc: Schliessen'
 font_hint_end:
-copy_button: db 'Zeichen kopieren'
-copy_button_end:
 apply_button: db 'Uebernehmen'
 apply_button_end:
 close_button: db 'Schliessen'
@@ -1158,27 +1083,31 @@ font_berkeley: db 'Berkeley'
 font_roman: db 'Roman   '
 font_sans: db 'Sans    '
 font_mono: db 'Mono    '
+copy_field_label: db 'Zu kopierende Zeichen:'
+copy_field_label_end:
 font_sample: db 'Aa 0123'
 font_sample_end:
 up_arrow: db '^'
 down_arrow: db 'v'
-info_line1: db 'Zeichensatz Tabelle fuer GeoWorks 1'
+info_line1: db 'Zeichensatztabelle Version 1.0'
 info_line1_end:
-info_line2: db 'Das Raster zeigt GEOS-Zeichencodes 00 bis FF.'
+info_line2: db 'f',0x81,'r GeoWorks 1.*'
 info_line2_end:
-info_line3: db 'Nur druckbare Zeichen koennen kopiert werden.'
+info_line3: db '2026 (c) Johannes M',0x94,'ller, Syhra'
 info_line3_end:
-info_line4: db 'Die Tabelle ist keine Unicode-Zeichentabelle.'
+info_line4: db 'Apache-Lizenz 2.0'
 info_line4_end:
-help_line1: db 'Zelle anklicken oder mit Pfeiltasten auswaehlen.'
+info_line5: db 'GEOS-Zeichencodes 00 bis FF (kein Unicode).'
+info_line5_end:
+help_line1: db 'Zeichensatztabelle fuer GeoWorks 1.*'
 help_line1_end:
-help_line2: db 'C oder Leertaste kopiert das ausgewaehlte Zeichen.'
+help_line2: db 'Zelle anklicken oder mit Pfeiltasten auswaehlen.'
 help_line2_end:
-help_line3: db 'Im Menue Schrift eine Schriftart waehlen.'
+help_line3: db 'Hex-Code und Zeichen stehen unten bei Auswahl.'
 help_line3_end:
-help_line4: db 'Naechste/Vorige Schrift blaettert durch die Liste.'
+help_line4: db 'Zeichen kopieren uebertraegt druckbare Zeichen.'
 help_line4_end:
-help_line5: db 'Esc kehrt zur Zeichentabelle zurueck.'
+help_line5: db 'Steuercodes 00-1F und 7F sind nicht kopierbar.'
 help_line5_end:
 %include "fontlist.inc"
 

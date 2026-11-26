@@ -24,7 +24,7 @@
 %define V_ODS     0xC0
 %define V_OSI     0xC2
 %define VIS_CLASS 0x100
-%define VIS_RES   6
+%define VIS_RES   5
 %define VIS_CHUNK 0x22
 
 %macro VIS_ENTER 0
@@ -677,7 +677,7 @@ font_button: db 'Schrift F'
 font_button_end:
 font_title: db 'Schriftart auswaehlen'
 font_title_end:
-build_stamp: db 'Build: 20261126-FONT5'
+build_stamp: db 'Build: 20261126-FONT6'
 build_stamp_end:
 font_hint: db 'Pfeile + Enter bestaetigen; Esc schliesst'
 font_hint_end:

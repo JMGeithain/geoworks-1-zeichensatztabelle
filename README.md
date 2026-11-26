@@ -4,11 +4,12 @@ Native 8086-Anwendung für das Ensemble 1.2 Profil des
 [PC/GEOS 1 SDK](https://github.com/dnesbitt142/pcgeos-1-sdk-v2). Sie zeigt die
 GEOS-Bytewerte `00` bis `FF` als 16×16-Raster. Druckbare Zeichen werden in der
 ausgewählten Schrift und vergrößert gezeichnet. In den Rasterzellen erscheinen
-keine Hexcodes; der Code des markierten Zeichens steht unten neben der Auswahl.
+keine Hexcodes; der Code des markierten Zeichens steht oben in der Kopfzeile.
 Kleine Beschriftungen und Informationen verwenden Bison. Der Name der aktiven
 Schrift wird größer in dieser Schrift dargestellt; bei Symbol- und LED-Schriften
 bleibt der Name zur Lesbarkeit in Berkeley. Der ausgewählte Zeichencode steht
-oben neben dem Zeichenfeld.
+oben neben dem Zeichenfeld. Unter dem Schriftnamen steht der DOS-Dateiname der
+zugehörigen `.FNT`-Datei.
 
 ## Bedienung
 

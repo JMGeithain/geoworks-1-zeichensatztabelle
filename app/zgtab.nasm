@@ -830,18 +830,56 @@ paint_table:
  mov cx,FONT_DEFAULT
  jmp .font_name_ready
 .font_name_fallback:
- mov word [V_FDINDEX],0
+ mov word [V_FDINDEX],0xffff
  mov cx,FONT_DEFAULT
 .font_name_ready:
  mov dx,18
  mov ax,18
  call set_font
+ cmp word [V_FDINDEX],0xffff
+ je .draw_fallback_name
  mov si,[V_FDINDEX]
  add si,font_records+2
+ mov cx,20
+ jmp .draw_font_name
+.draw_fallback_name:
+ mov si,font_berkeley
+ mov cx,font_berkeley_end-font_berkeley
+.draw_font_name:
  mov ax,350
  mov bx,22
- mov cx,20
  call draw_text
+ cmp word [V_FDINDEX],0xffff
+ je .no_dos_filename
+ mov cx,FONT_UI
+ mov dx,10
+ mov ax,10
+ call set_font
+ mov si,dos_file_label
+ mov ax,350
+ mov bx,42
+ mov cx,dos_file_label_end-dos_file_label
+ call draw_text
+ mov bx,[V_FDINDEX]
+ shr bx,1
+ shr bx,1
+ shr bx,1
+ shr bx,1
+ shr bx,1                       ; record byte offset -> record index
+ mov cx,bx
+ shl bx,1
+ shl bx,1
+ shl bx,1                       ; index * 8
+ shl cx,1
+ shl cx,1                       ; index * 4
+ add bx,cx                      ; index * 12
+ add bx,font_dos_names
+ mov si,bx
+ mov ax,414
+ mov bx,42
+ mov cx,12
+ call draw_text
+.no_dos_filename:
  cmp word [V_FDOPEN],0
  je .no_font_dialog
  call paint_font_dialog
@@ -1083,10 +1121,12 @@ charbuf: db 0
 clip_name: db 'Zeichensatz Tabelle',0
 font_title: db 'Weitere Schriften'
 font_title_end:
-build_stamp: db 'Build: 20261126-VGA3-UIFIX'
+build_stamp: db 'Build: 20261126-VGA4-FONTINFO'
 build_stamp_end:
 font_label: db 'Schriftart:'
 font_label_end:
+dos_file_label: db 'DOS-Datei:'
+dos_file_label_end:
 font_hint: db 'Pfeile: Auswahl; Enter: Uebernehmen; Esc: Schliessen'
 font_hint_end:
 apply_button: db 'Uebernehmen'
@@ -1094,6 +1134,7 @@ apply_button_end:
 close_button: db 'Schliessen'
 close_button_end:
 font_berkeley: db 'Berkeley'
+font_berkeley_end:
 font_roman: db 'Roman   '
 font_sans: db 'Sans    '
 font_mono: db 'Mono    '

@@ -381,12 +381,28 @@ font_dialog_open:
 redraw:
  cmp word [V_WIN],0
  je .done
+ push word [V_ODS]
+ push word [V_OSI]
  call begin_direct
- jc .done
- KCALL 446
- call paint_table
- KCALL 447
+ jc .restore
+ ; Draw through the same MSG_VIS_DRAW path used by normal window exposes.
+ ; This lets the view's update region and clipping remain under GEOS control.
+ push di
+ push bp
+ mov bp,di
+ mov bx,VIS_RES
+ KCALL 150
+ mov si,VIS_CHUNK
+ mov ax,0x2071
+ xor cx,cx
+ mov di,0x8080
+ KCALL 169
+ pop bp
+ pop di
  KCALL 212
+.restore:
+ pop word [V_OSI]
+ pop word [V_ODS]
 .done:
  ret
 
@@ -404,37 +420,12 @@ begin_direct:
  pop si
  or di,di
  jz .no
- call set_window_origin
  clc
  ret
 .no:
  stc
  ret
 
-; Apply the view origin to direct redraw GStates.
-set_window_origin:
- push di
- KCALL 440                       ; GrGetWinBounds
- pop di
- push ax
- push bx
- push cx
- push dx
- mov si,ax
- or si,bx
- jz .no_translation
- mov dx,ax
- xor cx,cx
- xor ax,ax
- push di
- KCALL 310                       ; GrApplyTranslation
- pop di
-.no_translation:
- pop dx
- pop cx
- pop bx
- pop ax
- ret
 ; AX/BX = point, DS:SI = bytes, CX = byte count. GState remains in DI.
 draw_text:
  push ds
@@ -593,7 +584,7 @@ paint_table:
  mov ax,[V_CODE]
  mov [cs:charbuf],al
  mov cx,[V_FONT]
- mov dx,10
+ mov dx,12
  mov ax,10
  call set_font
  mov ax,[V_COL]
@@ -748,7 +739,7 @@ charbuf: db 0
 clip_name: db 'Zeichensatz Tabelle',0
 font_title: db 'Schriftart auswaehlen'
 font_title_end:
-build_stamp: db 'Build: 20261126-FONT10'
+build_stamp: db 'Build: 20261126-FONT11'
 build_stamp_end:
 font_label: db 'Schrift:'
 font_label_end:

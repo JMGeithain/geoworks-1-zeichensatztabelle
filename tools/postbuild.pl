@@ -68,8 +68,8 @@ my $check=object_block(3,{
 die "interface block differs from the SDK output\n" unless $check eq $res[3]{data};
 
 my ($filemenu,$filemenu_m,$filemenu_hints)=(0x2a,0x2c,0x2e);
-my @file_items=(['Zeichentabelle',0x0c20],['Zeichen kopieren',0x0c21],
-                ['Info',0x0c22],['Hilfe',0x0c23]);
+my @file_items=(['Zeichentabelle',0x0c20,0],['Zeichen kopieren',0x0c21,8],
+                ['Info',0x0c22,0],['Hilfe',0x0c23,0]);
 my @file_chunks=map { [0x30+$_*4,0x32+$_*4] } 0..$#file_items;
 my ($fontmenu,$fontmenu_m,$fontmenu_hints)=(0x40,0x42,0x44);
 my @font_items=(['Berkeley',0x0c10],['Roman',0x0c11],['Sans',0x0c12],['Mono',0x0c13],
@@ -110,11 +110,11 @@ for my $i (0..$#tools) {
     $chunks{$mh}=[moniker($label,0xff),2];
 }
 for my $i (0..$#file_items) {
-    my ($label,$msg)=@{$file_items[$i]};
+    my ($label,$msg,$mnemonic)=@{$file_items[$i]};
     my ($trigger,$mh)=@{$file_chunks[$i]};
     my $sibling=$i<$#file_items ? [$file_chunks[$i+1][0],SAME_BLOCK] : [$filemenu|1,SAME_BLOCK];
     $chunks{$trigger}=[base(68,sibling=>$sibling,moniker=>$mh,states=>0xc004).pack('vvv',0x22,0x1000|$vis_res,$msg),7];
-    $chunks{$mh}=[moniker($label,0),2];
+    $chunks{$mh}=[moniker($label,$mnemonic),2];
 }
 for my $i (0..$#font_items) {
     my ($label,$msg)=@{$font_items[$i]};

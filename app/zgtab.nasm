@@ -1158,7 +1158,7 @@ charbuf: db 0
 clip_name: db 'Zeichensatz Tabelle',0
 font_title: db 'Weitere Schriften'
 font_title_end:
-build_stamp: db 'Build: 20261126-VGA9-SELECT'
+build_stamp: db 'Build: 20261126-VGA10-MENUHELP'
 build_stamp_end:
 font_label: db 'Schriftart:'
 font_label_end:
@@ -1199,13 +1199,13 @@ info_line5: db 'GEOS-Zeichencodes 00 bis FF (kein Unicode).'
 info_line5_end:
 help_title: db 'Hilfe'
 help_title_end:
-help_line1: db 'Zeichen mit der Maus anklicken oder mit Pfeiltasten waehlen.'
+help_line1: db 'Zeichen mit Maus oder Pfeiltasten auswaehlen.'
 help_line1_end:
-help_line2: db 'Vorschau und Hex-Code zeigen das ausgewaehlte Zeichen.'
+help_line2: db 'Vorschau und Hex-Code zeigen die Auswahl.'
 help_line2_end:
-help_line3: db 'Zeichen kopieren legt das Zeichen in die Zwischenablage.'
+help_line3: db 'Kopieren legt druckbare Zeichen in die Ablage.'
 help_line3_end:
-help_line4: db 'Weitere Schriften zeigt installierte Fonts zur Auswahl.'
+help_line4: db 'Weitere Schriften wechselt die Schriftart.'
 help_line4_end:
 help_line5: db 'Steuercodes 00-1F und 7F sind nicht kopierbar.'
 help_line5_end:

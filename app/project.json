@@ -13,8 +13,9 @@
     }
   ],
   "view": {
-    "width": 560,
+    "width": 640,
     "height": 450
   },
   "native_runtime_tested": false
 }
+

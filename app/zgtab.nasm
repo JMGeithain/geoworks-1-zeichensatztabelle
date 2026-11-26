@@ -77,15 +77,12 @@ G1_METHOD 0x0a01, app_open
 G1_METHOD 0x0a03, app_close
 G1_METHOD 0x0004, meta_attach
 G1_METHOD 0x0057, view_closed
-G1_METHOD 0x0c10, choose_berkeley
-G1_METHOD 0x0c11, choose_roman
-G1_METHOD 0x0c12, choose_sans
-G1_METHOD 0x0c13, choose_mono
 vis_class_table:
  db 'G1VISCLS'
- dw 4
- dw 0x2071,0x0049,0x007b,0x00c3
+ dw 8
+ dw 0x2071,0x0049,0x007b,0x00c3,0x0c10,0x0c11,0x0c12,0x0c13
  dw vis_draw,vis_exposed,vis_kbd_char,vis_start_select
+ dw choose_berkeley,choose_roman,choose_sans,choose_mono
 
 app_open:
  push es
@@ -108,20 +105,23 @@ meta_attach:
  retf
 
 choose_berkeley:
+ VIS_ENTER
  mov word [V_FONT],0x0202
  jmp font_changed
 choose_roman:
+ VIS_ENTER
  mov word [V_FONT],0x1000
  jmp font_changed
 choose_sans:
+ VIS_ENTER
  mov word [V_FONT],0x1200
  jmp font_changed
 choose_mono:
+ VIS_ENTER
  mov word [V_FONT],0x1a00
 font_changed:
  call redraw
- xor cx,cx
- retf
+ jmp vis_ret
 
 view_closed:
  mov word [V_WIN],0
@@ -640,6 +640,26 @@ paint_table:
  mov bx,420
  mov cx,build_stamp_end-build_stamp
  call draw_text
+ mov si,font_label
+ mov ax,150
+ mov bx,420
+ mov cx,font_label_end-font_label
+ call draw_text
+ mov si,font_berkeley
+ cmp word [V_FONT],0x0202
+ je .font_name
+ mov si,font_roman
+ cmp word [V_FONT],0x1000
+ je .font_name
+ mov si,font_sans
+ cmp word [V_FONT],0x1200
+ je .font_name
+ mov si,font_mono
+.font_name:
+ mov ax,208
+ mov bx,420
+ mov cx,8
+ call draw_text
  cmp word [V_FDOPEN],0
  je .no_font_dialog
  call paint_font_dialog
@@ -689,8 +709,10 @@ charbuf: db 0
 clip_name: db 'Zeichensatz Tabelle',0
 font_title: db 'Schriftart auswaehlen'
 font_title_end:
-build_stamp: db 'Build: 20261126-FONT7'
+build_stamp: db 'Build: 20261126-FONT8'
 build_stamp_end:
+font_label: db 'Schrift:'
+font_label_end:
 font_hint: db 'Pfeile + Enter bestaetigen; Esc schliesst'
 font_hint_end:
 font_berkeley: db 'Berkeley'

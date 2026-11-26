@@ -15,6 +15,7 @@ sub base {
     pack('v14',0x3000,$ord,0,8,0,0,@{$o{sibling}//[0,0]},
       @{$o{child}//[0,0]},$o{moniker}//0,$o{accel}//0,$o{hints}//0,$o{states}//0xc000)
 }
+sub moniker { my ($text,$mn)=@_; pack('vvCC',1,0,0,$mn//0xff).$text."\0" }
 
 my $g = from_bytes(slurp($in), $in);
 my @res = map {{ data=>$_->{data}, flags=>$_->{flags},
@@ -65,8 +66,12 @@ my $check=object_block(3,{
 },6);
 die "interface block differs from the SDK output\n" unless $check eq $res[3]{data};
 
-my $vh=0x2a;
+my ($fontmenu,$fontmenu_m,$fontmenu_hints)=(0x2a,0x2c,0x2e);
+my @font_items=(['Berkeley',0x0c10],['Roman',0x0c11],['Sans',0x0c12],['Mono',0x0c13]);
+my @font_chunks=map { [0x30+$_*4,0x32+$_*4] } 0..$#font_items;
+my $vh=0x40;
 my $view=$mkview->([$primary_h|1,SAME_BLOCK]);
+$view=$mkview->([$fontmenu,SAME_BLOCK]);
 set16(\$view,0x18,$vh);
 set16(\$view,0x2e,0xd010);
 set16(\$view,0x42,0x22);
@@ -75,9 +80,22 @@ my %chunks=(
     $primary_h=>[$primary,3],
     $title_h=>[text_moniker($g->{long_name}),2],
     $view_h=>[$view,7],
+    $fontmenu=>[base(80,sibling=>[$primary_h|1,SAME_BLOCK],child=>[$font_chunks[0][0],SAME_BLOCK],moniker=>$fontmenu_m,hints=>$fontmenu_hints).pack('C',2),3],
+    $fontmenu_m=>[moniker('Schrift',5),2],
+    $fontmenu_hints=>[pack('vv',0x4005,4),2],
     $vh=>[pack('v4',0x4015,4,0x4014,4),2]
 );
-$res[3]{data}=object_block(3,\%chunks,6);
+for my $i (0..$#font_items) {
+    my ($label,$msg)=@{$font_items[$i]};
+    my ($trigger,$mh)=@{$font_chunks[$i]};
+    my $sibling=$i<$#font_items ? [$font_chunks[$i+1][0],SAME_BLOCK] : [$fontmenu|1,SAME_BLOCK];
+    $chunks{$trigger}=[base(68,sibling=>$sibling,moniker=>$mh,states=>0xc004).pack('vvv',0,0x1000,$msg),7];
+    $chunks{$mh}=[moniker($label,0),2];
+}
+$chunks{$view_h}[0]=$view;
+my $chunk_count=($vh+2-0x20)/2;
+$chunk_count++ if $chunk_count%2;
+$res[3]{data}=object_block(3,\%chunks,$chunk_count);
 
 my $inst=pack('H*','01600000060000000000f3018f01d878f000000000000000000000000000000000020000000000000046000d1000000000000000000000000000aa00a900000000000000ac00ab00000000000000b200b100000000000000b400b300');
 my $at=index($inst,pack('vv',0x46,0x100d));

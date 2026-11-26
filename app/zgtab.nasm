@@ -5,6 +5,7 @@
 %include "ensemble12.inc"
 %define PROCESS_CLASS 0x40
 %define FONT_DEFAULT 0x0202         ; Berkeley bitmap font
+%define FONT_UI      0x0A00         ; Bison, compact labels and information
 %define GRID_X 16
 %define GRID_Y 45
 %define CELL_W 32
@@ -637,9 +638,9 @@ paint_table:
  je .info_page
  cmp word [V_PANEL],2
  je .help_page
- mov cx,FONT_DEFAULT
- mov dx,12
- mov ax,12
+ mov cx,FONT_UI
+ mov dx,10
+ mov ax,10
  call set_font
  mov ax,16
  mov bx,4
@@ -732,9 +733,9 @@ paint_table:
  ; Selection status beneath the grid.
  mov ax,0
  call set_text_color
- mov cx,FONT_DEFAULT
- mov dx,12
- mov ax,12
+ mov cx,FONT_UI
+ mov dx,10
+ mov ax,10
  call set_font
  mov si,status
  mov ax,16
@@ -805,7 +806,7 @@ paint_table:
 .status_done:
  mov ax,0
  call set_text_color
- mov cx,FONT_DEFAULT
+ mov cx,FONT_UI
  mov dx,10
  mov ax,10
  call set_font
@@ -857,9 +858,9 @@ paint_table:
  ret
 
 paint_info_page:
- mov cx,FONT_DEFAULT
- mov dx,12
- mov ax,12
+ mov cx,FONT_UI
+ mov dx,10
+ mov ax,10
  call set_font
  mov ax,24
  mov bx,78
@@ -889,9 +890,9 @@ paint_info_page:
  ret
 
 paint_help_page:
- mov cx,FONT_DEFAULT
- mov dx,12
- mov ax,12
+ mov cx,FONT_UI
+ mov dx,10
+ mov ax,10
  call set_font
  mov ax,24
  mov bx,78
@@ -927,9 +928,9 @@ paint_font_dialog:
  call fill_rect
  mov ax,0
  call set_text_color
- mov cx,FONT_DEFAULT
- mov dx,12
- mov ax,12
+ mov cx,FONT_UI
+ mov dx,10
+ mov ax,10
  call set_font
  mov si,font_title
  mov ax,205
@@ -1054,9 +1055,9 @@ paint_font_dialog:
  call fill_rect
  mov ax,0
  call set_text_color
- mov cx,FONT_DEFAULT
- mov dx,12
- mov ax,12
+ mov cx,FONT_UI
+ mov dx,10
+ mov ax,10
  call set_font
  mov si,apply_button
  mov ax,162
@@ -1084,7 +1085,7 @@ charbuf: db 0
 clip_name: db 'Zeichensatz Tabelle',0
 font_title: db 'Weitere Schriften'
 font_title_end:
-build_stamp: db 'Build: 20261126-VGA1'
+build_stamp: db 'Build: 20261126-VGA2-BISON'
 build_stamp_end:
 font_label: db 'Zeichensatz:'
 font_label_end:
@@ -1134,7 +1135,6 @@ help_line5_end:
 
 %include "g1clip.inc"
 G1_FINISH
-
 
 
 

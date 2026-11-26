@@ -53,8 +53,11 @@ set16(\$primary,0x1c,0x22); set16(\$primary,0x1e,0x80);
 my $mkview=sub {
     my $sib=shift;
     my $v=base(75,sibling=>$sib); $v.="\0" x (71-length($v));
+    # Follow Bounce's GenView size model: its bounds are 200x70 through
+    # 612x792. Keep our drawing area as the preferred/minimum bounds and allow
+    # only a small amount of extra room when the user resizes the window.
     my %f=(0x20=>1,0x24=>1,0x2a=>15,0x2e=>0x8000,0x32=>$w,0x34=>$h,
-      0x36=>$w,0x38=>$h,0x3a=>10,0x3c=>10,0x3e=>20,0x40=>15,0x44=>0x1000);
+      0x36=>$w+20,0x38=>$h+10,0x3a=>10,0x3c=>10,0x3e=>20,0x40=>15,0x44=>0x1000);
     set16(\$v,$_,$f{$_}) for keys %f;
     substr($v,0x46,1)=pack('C',1);
     return $v;
@@ -76,7 +79,9 @@ my @font_items=(['Berkeley',0x0c10],['Roman',0x0c11],['Sans',0x0c12],['Mono',0x0
 my @font_chunks=map { [0x46+$_*4,0x48+$_*4] } 0..$#font_items;
 my ($tb,$tb_hints)=(0x74,0x72);
 my $view=$mkview->([$filemenu,SAME_BLOCK]);
-set16(\$view,0x2e,0xd010);
+# Match Bounce.GEO's GVI attributes. The former 0xd010 value let this view
+# expand with the desktop and made the app appear maximized at startup.
+set16(\$view,0x2e,0x8000);
 set16(\$view,0x42,0x22);
 set16(\$view,0x44,0x1005);
 my %chunks=(
@@ -163,4 +168,3 @@ my $new=build_geode(
 open my $f,'>:raw',$out or die "$out: $!";
 print $f $new->{raw}; close $f;
 printf "%s: %d bytes, %d resources, Vis input class and application icon installed\n",$out,length($new->{raw}),scalar @res;
-

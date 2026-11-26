@@ -5,8 +5,9 @@ Native 8086-Anwendung für das Ensemble 1.2 Profil des
 GEOS-Bytewerte `00` bis `FF` als 16×16-Raster. Druckbare Zeichen werden in der
 ausgewählten Schrift und vergrößert gezeichnet. In den Rasterzellen erscheinen
 keine Hexcodes; der Code des markierten Zeichens steht unten neben der Auswahl.
-Status, Buildkennung und das Label „Zeichensatz:“ bleiben in Berkeley. Der Name der
-aktiven Schrift wird größer in dieser Schrift dargestellt.
+Kleine Beschriftungen und Informationen verwenden Bison. Der Name der aktiven
+Schrift wird größer in dieser Schrift dargestellt; bei Symbol- und LED-Schriften
+bleibt der Name zur Lesbarkeit in Berkeley.
 
 ## Bedienung
 
@@ -29,8 +30,10 @@ aktiven Schrift wird größer in dieser Schrift dargestellt.
   Schriften** und **Zeichen kopieren**. Die Schriftzeile zeigt den Namen der ausgewählten Schrift groß in deren Schrift;
   bei LED- und Symbolfonts bleibt der Name zur Lesbarkeit in Berkeley.
 - Die Buildkennung steht nur auf der Info-Seite.
-- Das Fenster wird auf einen Inhaltsbereich von 540 × 390 Punkten begrenzt.
-  Damit passt es in VGA 640 × 480 und behält in größeren Modi diese Größe.
+- Das Fenster startet mit einem Inhaltsbereich von 540 × 390 Punkten. Wie bei
+  Bounce sind Start-/Mindestgröße und maximale Größe getrennt angegeben; die
+  Tabelle kann nur geringfügig bis 560 × 400 Punkte wachsen. In höheren Modi
+  startet sie weiterhin in der kleinen Fenstergröße.
 - Die Fontliste enthält 105 unterschiedliche Font-IDs aus den bei dieser
   Installation vorhandenen `.FNT`-Dateien. Sie ist ein Snapshot; neue
   Fontdateien erfordern eine Aktualisierung von `app/fontlist.inc`.
@@ -55,4 +58,3 @@ Das Projekt verwendet den SDK-Adapter `ensemble12` (Kernel 622.3, UI 693.0)
 und 8086-NASM. `native_runtime_tested` ist noch nicht gesetzt: Der Quellstand
 muss mit dem SDK gebaut und anschließend in der passenden GeoWorks-1-Runtime
 interaktiv geprüft werden.
-

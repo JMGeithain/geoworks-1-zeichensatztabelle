@@ -19,11 +19,16 @@ aktiven Schrift wird größer in dieser Schrift dargestellt.
   `FONT_EURO`-Dateiliste der hier verwendeten GeoWorks-Installation.
 - **C** oder **Leertaste** kopiert ein druckbares Zeichen in die Zwischenablage.
 - Steuerzeichen `00`–`1F` und `7F` sind als Code sichtbar und nicht kopierbar.
+- Beim Start ist `A` ausgewählt, damit der Kopierknopf direkt mit einem
+  druckbaren Zeichen geprüft werden kann. Der Status zeigt Kopiererfolg oder
+  einen Clipboard-Fehler an.
 - **Datei** enthält Zeichentabelle, Zeichen kopieren, Info und Hilfe.
 - Unter dem Raster gibt es zusätzlich echte GEOS-Schaltflächen für **Weitere
   Schriften** und **Zeichen kopieren**. Die Schriftzeile zeigt den Namen der ausgewählten Schrift groß in deren Schrift;
   bei LED- und Symbolfonts bleibt der Name zur Lesbarkeit in Berkeley.
 - Die Buildkennung steht nur auf der Info-Seite.
+- Das Layout ist auf einen Inhaltsbereich von 540 × 390 Punkten für VGA
+  640 × 480 ausgelegt.
 - Die Fontliste enthält 105 unterschiedliche Font-IDs aus den bei dieser
   Installation vorhandenen `.FNT`-Dateien. Sie ist ein Snapshot; neue
   Fontdateien erfordern eine Aktualisierung von `app/fontlist.inc`.

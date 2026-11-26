@@ -106,7 +106,10 @@ g1_clip_text:
  ; owner is chunk:handle; the item is a normal clipboard item.
  mov word [es:0],0
  mov word [es:2],0
- mov word [es:4],0x4000
+ ; CIF_QUICK (0x4000) is for drag-and-drop only.  The ordinary
+ ; system clipboard requires TIF_NORMAL (zero), otherwise paste targets
+ ; ignore this item even though ClipboardRegisterItem succeeds.
+ mov word [es:4],0
  mov si,[bp+6]
  mov di,6
  mov cx,32

@@ -1158,7 +1158,7 @@ charbuf: db 0
 clip_name: db 'Zeichensatz Tabelle',0
 font_title: db 'Weitere Schriften'
 font_title_end:
-build_stamp: db 'Build: 20261126-VGA11-MENUK'
+build_stamp: db 'Build: 20261126-UMLAUTCLIP1'
 build_stamp_end:
 font_label: db 'Schriftart:'
 font_label_end:
@@ -1189,9 +1189,9 @@ copy_failed: db 'Clipboard-Fehler'
 copy_failed_end:
 info_line1: db 'Zeichensatztabelle Version 1.0'
 info_line1_end:
-info_line2: db 'f',0x81,'r GeoWorks 1.*'
+info_line2: db 'f',0x9F,'r GeoWorks 1.*'
 info_line2_end:
-info_line3: db '2026 (c) Johannes M',0x94,'ller, Syhra'
+info_line3: db '2026 (c) Johannes M',0x9A,'ller, Syhra'
 info_line3_end:
 info_line4: db 'Apache-Lizenz 2.0'
 info_line4_end:

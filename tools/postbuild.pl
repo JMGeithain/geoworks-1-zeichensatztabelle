@@ -48,6 +48,7 @@ my $vis_class = 0x100;
 }
 
 my ($primary_h,$title_h,$view_h,$app_h)=(0x24,0x26,0x28,0x24);
+my $vis_res=11; # resources 5 through 10 are the six app icon monikers
 my $primary=base(88,sibling=>[$app_h|1,0x1004],child=>[$view_h,SAME_BLOCK],moniker=>$title_h)."\0" x 5;
 set16(\$primary,0x1c,0x22); set16(\$primary,0x1e,0x80);
 my $mkview=sub {
@@ -80,7 +81,7 @@ my $view=$mkview->([$filemenu,SAME_BLOCK]);
 # expand with the desktop and made the app appear maximized at startup.
 set16(\$view,0x2e,0x8000);
 set16(\$view,0x42,0x22);
-set16(\$view,0x44,0x1005);
+set16(\$view,0x44,0x1000|$vis_res);
 # Keep Bounce's separate preferred and maximum size fields. Set the preferred
 # drawing area to the app's canvas; permit only a small resize margin.
 set16(\$view,0x36,$w+20);
@@ -153,7 +154,7 @@ my $at=index($inst,pack('vv',0x46,0x100d));
 die "view link not found in the Vis instance\n" if $at<0;
 substr($inst,$at,4)=pack('vv',0x28,0x1003);
 substr($inst,10,4)=pack('vv',3999,2999);
-my $vis=object_block(5,{0x22=>[$inst,3]},2);
+my $vis=object_block($vis_res,{0x22=>[$inst,3]},2);
 my $fp=unpack('v',substr($vis,0x20,2));
 substr($vis,$fp+1,1)=pack('C',3);
 push @res,{data=>$vis,flags=>0x41a,relocations=>[[0x23,0,0]]};

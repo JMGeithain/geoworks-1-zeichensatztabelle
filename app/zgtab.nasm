@@ -29,7 +29,7 @@
 %define V_FDINDEX 0xC8
 %define V_COPY   0xCA
 %define VIS_CLASS 0x100
-%define VIS_RES   5
+%define VIS_RES   11
 %define VIS_CHUNK 0x22
 
 %macro VIS_ENTER 0

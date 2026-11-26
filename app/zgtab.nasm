@@ -77,6 +77,10 @@ G1_METHOD 0x0a01, app_open
 G1_METHOD 0x0a03, app_close
 G1_METHOD 0x0004, meta_attach
 G1_METHOD 0x0057, view_closed
+G1_METHOD 0x0c10, choose_berkeley
+G1_METHOD 0x0c11, choose_roman
+G1_METHOD 0x0c12, choose_sans
+G1_METHOD 0x0c13, choose_mono
 vis_class_table:
  db 'G1VISCLS'
  dw 4
@@ -101,6 +105,22 @@ app_close:
 meta_attach:
  mov di,PROCESS_CLASS
  KCALL 489
+ retf
+
+choose_berkeley:
+ mov word [V_FONT],0x0202
+ jmp font_changed
+choose_roman:
+ mov word [V_FONT],0x1000
+ jmp font_changed
+choose_sans:
+ mov word [V_FONT],0x1200
+ jmp font_changed
+choose_mono:
+ mov word [V_FONT],0x1a00
+font_changed:
+ call redraw
+ xor cx,cx
  retf
 
 view_closed:
@@ -450,12 +470,6 @@ paint_table:
  mov si,title
  mov cx,title_end-title
  call draw_text
- mov si,font_button
- mov ax,486
- mov bx,18
- mov cx,font_button_end-font_button
- call draw_text
-
  ; table grid: every cell shows its two-digit GEOS code. Printable values
  ; additionally show the actual glyph in the selected font.
  mov cx,[V_FONT]
@@ -673,11 +687,9 @@ status_end:
 codebuf: db '00'
 charbuf: db 0
 clip_name: db 'Zeichensatz Tabelle',0
-font_button: db 'Schrift F'
-font_button_end:
 font_title: db 'Schriftart auswaehlen'
 font_title_end:
-build_stamp: db 'Build: 20261126-FONT6'
+build_stamp: db 'Build: 20261126-FONT7'
 build_stamp_end:
 font_hint: db 'Pfeile + Enter bestaetigen; Esc schliesst'
 font_hint_end:

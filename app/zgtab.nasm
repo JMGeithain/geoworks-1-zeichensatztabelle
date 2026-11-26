@@ -108,10 +108,10 @@ view_exposed:
 kbd_char:
  cmp word [V_FDOPEN],0
  jne .font_dialog
- test dl,0x81                    ; ignore releases and state keys
- jnz .pass
  cmp ch,0xff
  jne .ascii
+ test dl,0x81                    ; ignore releases and state keys
+ jnz .pass
  cmp cl,0x90                     ; up
  je .up
  cmp cl,0x91                     ; down
@@ -161,10 +161,10 @@ kbd_char:
  call redraw
  retf
 .font_dialog:
- test dl,0x81
- jnz .font_eat
  cmp ch,0xff
  jne .font_ascii
+ test dl,0x81
+ jnz .font_eat
  cmp cl,0x90
  je .font_up
  cmp cl,0x91
@@ -245,13 +245,13 @@ kbd_char:
 mouse_select:
  cmp word [V_FDOPEN],0
  jne .font_mouse
- cmp cx,468
+ cmp cx,450
  jb .grid_mouse
- cmp cx,552
+ cmp cx,560
  jae .grid_mouse
- cmp dx,10
+ cmp dx,4
  jb .grid_mouse
- cmp dx,43
+ cmp dx,50
  jae .grid_mouse
  mov word [V_FDOPEN],1
  mov word [V_FDSEL],0
@@ -637,7 +637,7 @@ font_button: db 'Schrift F'
 font_button_end:
 font_title: db 'Schriftart auswaehlen'
 font_title_end:
-build_stamp: db 'Build: 20261126-FONT3'
+build_stamp: db 'Build: 20261126-FONT4'
 build_stamp_end:
 font_hint: db 'Pfeile + Enter bestaetigen; Esc schliesst'
 font_hint_end:

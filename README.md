@@ -35,9 +35,9 @@ zugehörigen `.FNT`-Datei.
   Schriften** und **Zeichen kopieren**. Die Schriftzeile zeigt den Namen der ausgewählten Schrift groß in deren Schrift;
   bei LED- und Symbolfonts bleibt der Name zur Lesbarkeit in Berkeley.
 - Die Buildkennung steht nur auf der Info-Seite.
-- Das Fenster startet mit einem Inhaltsbereich von 500 × 350 Punkten. Wie bei
+- Das Fenster startet mit einem Inhaltsbereich von 540 × 350 Punkten. Wie bei
   Bounce sind Start-/Mindestgröße und maximale Größe getrennt angegeben; die
-  Tabelle kann nur geringfügig bis 520 × 360 Punkte wachsen. In höheren Modi
+  Tabelle kann nur geringfügig bis 540 × 360 Punkte wachsen. In höheren Modi
   startet sie weiterhin in der kleinen Fenstergröße.
 - Die Fontliste enthält 105 unterschiedliche Font-IDs aus den bei dieser
   Installation vorhandenen `.FNT`-Dateien. Sie ist ein Snapshot; neue

@@ -8,8 +8,9 @@
 %define FONT_UI      0x0A00         ; Bison, compact labels and information
 %define GRID_X 16
 %define GRID_Y 60
-%define CELL_W 30
-%define CELL_H 15
+; Glyph origins advance 32 points horizontally and 16 vertically.
+%define CELL_W 32
+%define CELL_H 16
 
 ; These locations follow the process-data layout used by the SDK application
 ; template. They are private application state, not GEOS API structures.
@@ -338,7 +339,7 @@ vis_start_select:
 .copy_grid_check:
  cmp cx,340
  jb .grid
- cmp cx,500
+ cmp cx,540
  jae .grid
  cmp dx,18
  jb .grid
@@ -356,9 +357,9 @@ vis_start_select:
  jl .pass
  cmp dx,0
  jl .pass
- cmp cx,480
+ cmp cx,512
  jae .pass
- cmp dx,240
+ cmp dx,256
  jae .pass
  mov ax,cx
  mov bl,CELL_W
@@ -625,7 +626,7 @@ paint_table:
  call set_area
  xor ax,ax
  xor bx,bx
- mov cx,500
+ mov cx,540
  mov dx,350
  call fill_rect
  cmp word [V_PANEL],1
@@ -641,10 +642,10 @@ paint_table:
  mov si,copy_field_label
  mov cx,copy_field_label_end-copy_field_label
  call draw_text
- ; Put the selected byte code on the same header line as the labels.
+ ; Put the selected byte code directly below the enlarged character.
  mov si,status
- mov ax,180
- mov bx,4
+ mov ax,16
+ mov bx,42
  mov cx,status_end-status
  call draw_text
  mov ax,[V_SEL]
@@ -658,8 +659,8 @@ paint_table:
  mov bl,ah
  mov al,[cs:hexchars+bx]
  mov [cs:codebuf+1],al
- mov ax,254
- mov bx,4
+ mov ax,74
+ mov bx,42
  mov si,codebuf
  mov cx,2
  push ds
@@ -771,7 +772,7 @@ paint_table:
  mov dx,GRID_Y+16*CELL_H+2
  call fill_rect
 
- ; Copy status beneath the grid.
+ ; Keep errors below the grid; successful copies are reported above.
  mov ax,0
  call set_text_color
  mov cx,FONT_UI
@@ -789,9 +790,16 @@ paint_table:
  mov cx,copy_failed_end-copy_failed
  jmp .copy_status_draw
 .copy_success:
+ mov ax,12
+ call set_text_color
  mov si,copy_success
  mov cx,copy_success_end-copy_success
- jmp .copy_status_draw
+ mov ax,480
+ mov bx,4
+ call draw_text
+ mov ax,0
+ call set_text_color
+ jmp .copy_status_done
 .copy_control:
  mov si,copy_control
  mov cx,copy_control_end-copy_control
@@ -1139,7 +1147,7 @@ charbuf: db 0
 clip_name: db 'Zeichensatz Tabelle',0
 font_title: db 'Weitere Schriften'
 font_title_end:
-build_stamp: db 'Build: 20261126-CLIPFIX2'
+build_stamp: db 'Build: 20261126-VGA7-CLIPFIX2'
 build_stamp_end:
 font_label: db 'Schriftart:'
 font_label_end:

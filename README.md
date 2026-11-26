@@ -5,6 +5,8 @@ Native 8086-Anwendung für das Ensemble 1.2 Profil des
 GEOS-Bytewerte `00` bis `FF` als 16×16-Raster. Druckbare Zeichen werden in der
 ausgewählten Schrift und vergrößert gezeichnet. In den Rasterzellen erscheinen
 keine Hexcodes; der Code des markierten Zeichens steht oben in der Kopfzeile.
+Die Tabelle hat einen schmalen Rahmen, und die Zeichen werden etwas kleiner
+gezeichnet, damit das Raster ruhiger wirkt.
 Kleine Beschriftungen und Informationen verwenden Bison. Der Name der aktiven
 Schrift wird größer in dieser Schrift dargestellt; bei Symbol- und LED-Schriften
 bleibt der Name zur Lesbarkeit in Berkeley. Der ausgewählte Zeichencode steht
@@ -60,3 +62,4 @@ Das Projekt verwendet den SDK-Adapter `ensemble12` (Kernel 622.3, UI 693.0)
 und 8086-NASM. `native_runtime_tested` ist noch nicht gesetzt: Der Quellstand
 muss mit dem SDK gebaut und anschließend in der passenden GeoWorks-1-Runtime
 interaktiv geprüft werden.
+

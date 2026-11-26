@@ -1,6 +1,6 @@
 ; SPDX-License-Identifier: Apache-2.0
 ; Text-to-clipboard helper for the observed Ensemble 1.2 / GeoWorks 1.28 ABI.
-; Adapted from JMGeithain/geoworks-1-geozeit (app/g1clip.inc).
+; Uses the working transfer-item sequence from JMGeithain/geoworks-1-geozeit.
 ; DS:SI = GEOS text, CX = length, CS:DX = item name; CF signals failure.
 g1_clip_text:
  push bx
@@ -48,7 +48,6 @@ g1_clip_text:
  mov word [0x16],0
  mov word [0x18],0
  mov cx,[bp+4]
- inc cx                              ; GEOS text data is NUL terminated
  push bp
  KCALL 28
  pop bp
@@ -62,10 +61,10 @@ g1_clip_text:
  mov cx,[bp+4]
  cld
  rep movsb
- mov byte [es:di],0
  mov bx,[bp+10]
  mov ah,0x80
- xor dx,dx
+ mov dl,0
+ mov dh,0x8
  push bp
  KCALL 4
  pop bp

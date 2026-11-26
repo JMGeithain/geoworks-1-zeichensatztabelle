@@ -11,6 +11,15 @@ PC_PALETTE = [
     (255, 85, 85), (255, 85, 255), (255, 255, 85), (255, 255, 255),
 ]
 TRANSPARENT = 0
+# The supplied PCX uses muted monitor colors. Keep its pixel drawing intact,
+# but map the colored moniker to a clearer EGA-like palette for GeoWorks.
+ICON_RECOLOR = {
+    2: (85, 255, 255),   # light cyan
+    3: (255, 255, 85),   # yellow
+    4: (0, 170, 170),    # teal
+    10: (0, 0, 170),     # blue
+    15: (255, 85, 255),  # magenta accent
+}
 SIZES = {
     5: (64, 40, 0x46, True),
     6: (64, 40, 0x41, False),
@@ -98,7 +107,7 @@ def make_moniker(image, palette, width, height, vmtype, color):
                 opaque = idx != TRANSPARENT
                 if opaque:
                     mask[x // 8] |= 0x80 >> (x % 8)
-                col = nearest(palette[idx]) if opaque else 15
+                col = nearest(ICON_RECOLOR.get(idx, palette[idx])) if opaque else 15
                 pixels[x // 2] |= col << 4 if x % 2 == 0 else col
             packed_row = mask + pixels
         else:

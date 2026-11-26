@@ -367,12 +367,6 @@ vis_start_select:
  mov ax,dx
  mov bl,CELL_H
  div bl
- ; The GEOS start-select coordinate is one row below the glyph origin.
- ; Keep the first row selectable and correct the following rows.
- or al,al
- jz .row_aligned
- dec al
-.row_aligned:
  mov [V_ROW],al
  xor ax,ax
  mov al,[V_ROW]
@@ -625,6 +619,18 @@ fill_rect:
  pop di
  ret
 
+set_line_color:
+ push di
+ KCALL 346                       ; GrSetLineColor
+ pop di
+ ret
+
+draw_frame:
+ push di
+ KCALL 316                       ; GrDrawRect
+ pop di
+ ret
+
 paint_table:
  ; white window background
  mov ax,15
@@ -730,8 +736,8 @@ paint_table:
  mov ax,[V_CODE]
  mov [cs:charbuf],al
  mov cx,[V_FONT]
- mov dx,14
- mov ax,10
+ mov dx,12
+ mov ax,8
  call set_font
  mov ax,[V_COL]
  add ax,9
@@ -752,6 +758,15 @@ paint_table:
  inc word [V_CODE]
  cmp word [V_CODE],256
  jb .cell
+
+ ; Frame the complete character table.
+ mov al,0
+ call set_line_color
+ mov ax,GRID_X-4
+ mov bx,GRID_Y-4
+ mov cx,GRID_X+16*CELL_W+3
+ mov dx,GRID_Y+16*CELL_H+3
+ call draw_frame
 
  ; Copy status beneath the grid.
  mov ax,0
@@ -1121,7 +1136,7 @@ charbuf: db 0
 clip_name: db 'Zeichensatz Tabelle',0
 font_title: db 'Weitere Schriften'
 font_title_end:
-build_stamp: db 'Build: 20261126-VGA4-FONTINFO'
+build_stamp: db 'Build: 20261126-VGA5-CLIPFIX'
 build_stamp_end:
 font_label: db 'Schriftart:'
 font_label_end:
@@ -1174,6 +1189,7 @@ help_line5_end:
 
 %include "g1clip.inc"
 G1_FINISH
+
 
 
 

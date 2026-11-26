@@ -3,9 +3,10 @@
 Native 8086-Anwendung für das Ensemble 1.2 Profil des
 [PC/GEOS 1 SDK](https://github.com/dnesbitt142/pcgeos-1-sdk-v2). Sie zeigt die
 GEOS-Bytewerte `00` bis `FF` als 16×16-Raster. Druckbare Zeichen werden in der
-ausgewählten Schrift gezeichnet; die Hexadezimalzahl jeder Zelle ist der
-jeweilige GEOS-Zeichencode. Die Zeichen werden größer als die Hexcodes
-dargestellt.
+ausgewählten Schrift und vergrößert gezeichnet. In den Rasterzellen erscheinen
+keine Hexcodes; der Code des markierten Zeichens steht unten neben der Auswahl.
+Status, Buildkennung und das Label „Schrift:“ bleiben in Berkeley. Der Name der
+aktiven Schrift wird größer in dieser Schrift dargestellt.
 
 ## Bedienung
 
@@ -16,6 +17,11 @@ dargestellt.
   unten neben der Build-Kennung angezeigt.
 - **C** oder **Leertaste** kopiert ein druckbares Zeichen in die Zwischenablage.
 - Steuerzeichen `00`–`1F` und `7F` sind als Code sichtbar und nicht kopierbar.
+- **Datei** enthält Zeichentabelle, Zeichen kopieren, Info und Hilfe.
+- **Nächste Schrift** und **Vorige Schrift** blättern durch die vier derzeit
+  angebotenen Schriften. Symbol- und LED-Schriften werden noch nicht automatisch
+  aus dem installierten Font-Verzeichnis ermittelt; für einen solchen Fontnamen
+  wäre Berkeley als lesbare Ersatzschrift vorgesehen.
 
 Die Zeichentabelle zeigt die Bytewerte des deutschen GeoWorks-1-Zielsystems.
 Sie ist keine Unicode-Tabelle.

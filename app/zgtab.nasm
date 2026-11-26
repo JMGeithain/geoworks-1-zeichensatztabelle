@@ -24,6 +24,8 @@
 %define V_ODS     0xC0
 %define V_OSI     0xC2
 %define V_PANEL   0xC4
+%define V_FDROW   0xC6
+%define V_FDINDEX 0xC8
 %define VIS_CLASS 0x100
 %define VIS_RES   5
 %define VIS_CHUNK 0x22
@@ -80,13 +82,13 @@ G1_METHOD 0x0004, meta_attach
 G1_METHOD 0x0057, view_closed
 vis_class_table:
  db 'G1VISCLS'
- dw 14
+ dw 15
  dw 0x2071,0x0049,0x007b,0x00c3
  dw 0x0c10,0x0c11,0x0c12,0x0c13,0x0c14,0x0c15
- dw 0x0c20,0x0c21,0x0c22,0x0c23
+ dw 0x0c20,0x0c21,0x0c22,0x0c23,0x0c16
  dw vis_draw,vis_exposed,vis_kbd_char,vis_start_select
  dw choose_berkeley,choose_roman,choose_sans,choose_mono,choose_next,choose_previous
- dw choose_table,choose_copy,choose_info,choose_help
+ dw choose_table,choose_copy,choose_info,choose_help,choose_all_fonts
 
 app_open:
  push es
@@ -159,26 +161,47 @@ choose_copy:
  VIS_ENTER
  call copy_selected
  jmp vis_ret
+choose_all_fonts:
+ VIS_ENTER
+ call font_dialog_open
+ mov word [V_FDOPEN],1
+ call redraw
+ jmp vis_ret
 
 cycle_font_by:
- ; AX is +1 for next and -1 for previous. The selectable font list is
- ; defined once in font_ids and is shared with the menu and picker overlay.
+ ; AX is +1 for next and -1 for previous in the installed-font snapshot.
  push ax
  xor si,si
 .find_font:
- cmp si,4
+ cmp si,font_count
  jae .wrap
  mov bx,si
  shl bx,1
- mov dx,[cs:font_ids+bx]
+ shl bx,1
+ shl bx,1
+ shl bx,1
+ shl bx,1
+ mov dx,[cs:font_records+bx]
  cmp dx,[V_FONT]
  je .found_font
  inc si
  jmp .find_font
 .found_font:
  pop ax
- add si,ax
- and si,3
+ cmp ax,1
+ jne .previous_font
+ inc si
+ cmp si,font_count
+ jb .set_font
+ xor si,si
+ jmp .set_font
+.previous_font:
+ or si,si
+ jnz .decrement_font
+ mov si,font_count-1
+ jmp .set_font
+.decrement_font:
+ dec si
  jmp .set_font
 .wrap:
  pop ax
@@ -186,7 +209,11 @@ cycle_font_by:
 .set_font:
  mov bx,si
  shl bx,1
- mov ax,[cs:font_ids+bx]
+ shl bx,1
+ shl bx,1
+ shl bx,1
+ shl bx,1
+ mov ax,[cs:font_records+bx]
  mov [V_FONT],ax
  ret
 
@@ -323,20 +350,26 @@ vis_kbd_char:
  jz .font_eat
  dec ax
  mov [V_FDSEL],ax
+ call font_keep_visible
  call redraw
  jmp .font_eat
 .font_down:
  mov ax,[V_FDSEL]
  inc ax
- cmp ax,4
+ cmp ax,font_count
  jae .font_eat
  mov [V_FDSEL],ax
+ call font_keep_visible
  call redraw
  jmp .font_eat
 .font_apply:
  mov bx,[V_FDSEL]
  shl bx,1
- mov ax,[cs:font_ids+bx]
+ shl bx,1
+ shl bx,1
+ shl bx,1
+ shl bx,1
+ mov ax,[cs:font_records+bx]
  mov [V_FONT],ax
 .font_cancel:
  mov word [V_FDOPEN],0
@@ -357,6 +390,18 @@ vis_start_select:
 .font_dialog_check:
  cmp word [V_FDOPEN],0
  jne .font_row
+ cmp cx,16
+ jb .copy_grid_check
+ cmp cx,132
+ jae .copy_grid_check
+ cmp dx,408
+ jb .copy_grid_check
+ cmp dx,442
+ jae .copy_grid_check
+ call copy_selected
+ mov ax,0x8000
+ jmp vis_ret
+.copy_grid_check:
  cmp cx,450
  jb .grid
  cmp cx,560
@@ -401,26 +446,78 @@ vis_start_select:
  mov ax,0x8000
  jmp vis_ret
 .font_row:
+ cmp cx,410
+ jb .font_row_area
+ cmp cx,434
+ jae .font_row_area
+ cmp dx,146
+ jb .font_row_area
+ cmp dx,162
+ jae .font_scroll_down
+ cmp word [V_FDSTART],0
+ je .font_handled
+ dec word [V_FDSTART]
+ call redraw
+ jmp .font_handled
+.font_scroll_down:
+ cmp dx,290
+ jb .font_row_area
+ cmp dx,306
+ jae .font_row_area
+ mov ax,[V_FDSTART]
+ cmp ax,font_count-10
+ jae .font_handled
+ inc word [V_FDSTART]
+ call redraw
+ jmp .font_handled
+.font_row_area:
  cmp cx,140
  jb .font_cancel
  cmp cx,420
  jae .font_cancel
+ cmp dx,306
+ jae .font_buttons
  sub dx,146
  cmp dx,0
  jl .font_cancel
- cmp dx,112
+ cmp dx,160
  jae .font_cancel
  mov ax,dx
- mov bl,28
+ mov bl,16
  div bl
  xor ah,ah
- cmp al,3
- ja .font_cancel
+ add ax,[V_FDSTART]
+ cmp ax,font_count
+ jae .font_handled
  mov [V_FDSEL],ax
- mov bx,ax
+ call redraw
+ jmp .font_handled
+.font_handled:
+ mov ax,0x8000
+ jmp vis_ret
+.font_buttons:
+ cmp dx,342
+ jb .font_cancel
+ cmp dx,374
+ jae .font_cancel
+ cmp cx,154
+ jb .font_cancel
+ cmp cx,246
+ jae .font_close_button
+ mov bx,[V_FDSEL]
  shl bx,1
- mov ax,[cs:font_ids+bx]
+ shl bx,1
+ shl bx,1
+ shl bx,1
+ shl bx,1
+ mov ax,[cs:font_records+bx]
  mov [V_FONT],ax
+ jmp .font_cancel
+.font_close_button:
+ cmp cx,260
+ jb .font_cancel
+ cmp cx,352
+ jae .font_cancel
 .font_cancel:
  mov word [V_FDOPEN],0
  call redraw
@@ -434,17 +531,44 @@ font_dialog_open:
  mov word [V_FDSEL],0
  xor si,si
 .find:
- cmp si,4
+ cmp si,font_count
  jae .done
  mov bx,si
  shl bx,1
- mov ax,[cs:font_ids+bx]
+ shl bx,1
+ shl bx,1
+ shl bx,1
+ shl bx,1
+ mov ax,[cs:font_records+bx]
  cmp ax,[V_FONT]
  je .found
  inc si
  jmp .find
 .found:
  mov [V_FDSEL],si
+.done:
+ mov word [V_FDSTART],0
+ mov ax,[V_FDSEL]
+ cmp ax,5
+ jb .start_ready
+ sub ax,5
+ mov [V_FDSTART],ax
+.start_ready:
+ ret
+
+font_keep_visible:
+ mov ax,[V_FDSEL]
+ cmp ax,[V_FDSTART]
+ jae .check_bottom
+ mov [V_FDSTART],ax
+ ret
+.check_bottom:
+ mov dx,[V_FDSTART]
+ add dx,10
+ cmp ax,dx
+ jb .done
+ sub ax,9
+ mov [V_FDSTART],ax
 .done:
  ret
 
@@ -573,7 +697,7 @@ paint_table:
  mov cx,548
  mov dx,42
  call fill_rect
- mov cx,[V_FONT]
+ mov cx,FONT_DEFAULT
  mov dx,18
  mov ax,18
  call set_font
@@ -716,18 +840,6 @@ paint_table:
  mov cx,[V_FONT]
  mov dx,22
  mov ax,22
- ; The four current choices are text fonts. If a future symbol/LED
- ; font is added, keep its name readable with the Berkeley fallback.
- cmp cx,0x0202
- je .preview_font
- cmp cx,0x1000
- je .preview_font
- cmp cx,0x1200
- je .preview_font
- cmp cx,0x1a00
- je .preview_font
- mov cx,FONT_DEFAULT
-.preview_font:
  call set_font
  mov ax,144
  mov bx,384
@@ -738,51 +850,60 @@ paint_table:
  pop ds
  call draw_text
  pop ds
- .status_done:
+.status_done:
  mov ax,0
  call set_text_color
  mov cx,FONT_DEFAULT
  mov dx,10
  mov ax,10
  call set_font
- mov si,build_stamp
+ mov ax,8
+ call set_area
  mov ax,16
- mov bx,420
- mov cx,build_stamp_end-build_stamp
+ mov bx,408
+ mov cx,132
+ mov dx,442
+ call fill_rect
+ mov ax,0
+ call set_text_color
+ mov ax,24
+ mov bx,416
+ mov si,copy_button
+ mov cx,copy_button_end-copy_button
  call draw_text
  mov si,font_label
  mov ax,150
  mov bx,420
  mov cx,font_label_end-font_label
  call draw_text
- mov si,font_berkeley
- cmp word [V_FONT],0x0202
- je .font_name
- mov si,font_roman
- cmp word [V_FONT],0x1000
- je .font_name
- mov si,font_sans
- cmp word [V_FONT],0x1200
- je .font_name
- mov si,font_mono
-.font_name:
+ xor bx,bx
+.font_name_find:
+ cmp bx,font_count*32
+ jae .font_name_fallback
+ mov ax,[V_FONT]
+ cmp ax,[cs:font_records+bx]
+ je .font_name_found
+ add bx,32
+ jmp .font_name_find
+.font_name_found:
+ mov [V_FDINDEX],bx
  mov cx,[V_FONT]
- cmp cx,0x0202
- je .font_name_size
- cmp cx,0x1000
- je .font_name_size
- cmp cx,0x1200
- je .font_name_size
- cmp cx,0x1a00
- je .font_name_size
+ test byte [cs:font_records+bx+22],1
+ jz .font_name_ready
  mov cx,FONT_DEFAULT
-.font_name_size:
- mov dx,20
- mov ax,20
+ jmp .font_name_ready
+.font_name_fallback:
+ mov word [V_FDINDEX],0
+ mov cx,FONT_DEFAULT
+.font_name_ready:
+ mov dx,18
+ mov ax,18
  call set_font
- mov ax,208
- mov bx,416
- mov cx,8
+ mov si,[V_FDINDEX]
+ add si,font_records+2
+ mov ax,218
+ mov bx,414
+ mov cx,20
  call draw_text
  cmp word [V_FDOPEN],0
  je .no_font_dialog
@@ -800,7 +921,7 @@ paint_table:
 paint_info_page:
  mov cx,FONT_DEFAULT
  mov dx,12
- mov cx,12
+ mov ax,12
  call set_font
  mov ax,24
  mov bx,78
@@ -819,12 +940,16 @@ paint_info_page:
  mov si,info_line4
  mov cx,info_line4_end-info_line4
  call draw_text
+ mov bx,198
+ mov si,build_stamp
+ mov cx,build_stamp_end-build_stamp
+ call draw_text
  ret
 
 paint_help_page:
  mov cx,FONT_DEFAULT
  mov dx,12
- mov cx,12
+ mov ax,12
  call set_font
  mov ax,24
  mov bx,78
@@ -850,35 +975,160 @@ paint_help_page:
  ret
 
 paint_font_dialog:
+ ; Compact modal picker in the style of GeoWrite's "Weitere Schriften".
  mov ax,8
  call set_area
  mov ax,126
  mov bx,108
  mov cx,434
- mov dx,338
+ mov dx,388
  call fill_rect
  mov ax,0
  call set_text_color
- mov cx,[V_FONT]
+ mov cx,FONT_DEFAULT
  mov dx,12
  mov ax,12
  call set_font
  mov si,font_title
- mov ax,148
+ mov ax,205
  mov bx,120
  mov cx,font_title_end-font_title
  call draw_text
- FONT_ROW 0,0x0202,font_berkeley
- FONT_ROW 1,0x1000,font_roman
- FONT_ROW 2,0x1200,font_sans
- FONT_ROW 3,0x1a00,font_mono
- mov cx,[V_FONT]
- mov dx,10
- mov ax,10
- call set_font
- mov si,font_hint
+
+ ; Font list background and ten visible entries.
+ mov ax,15
+ call set_area
+ mov ax,140
+ mov bx,146
+ mov cx,410
+ mov dx,306
+ call fill_rect
+ mov word [V_FDROW],0
+.list_row:
+ mov ax,[V_FDROW]
+ cmp ax,10
+ jae .list_done
+ mov ax,[V_FDSTART]
+ add ax,[V_FDROW]
+ cmp ax,font_count
+ jae .list_next
+ mov [V_FDINDEX],ax
+ cmp ax,[V_FDSEL]
+ jne .row_text_normal
+ mov ax,1
+ call set_area
+ mov ax,140
+ mov bx,[V_FDROW]
+ shl bx,1
+ shl bx,1
+ shl bx,1
+ shl bx,1
+ add bx,146
+ mov cx,408
+ mov dx,bx
+ add dx,15
+ call fill_rect
+ mov al,15
+ call set_text_color
+ jmp .row_draw
+.row_text_normal:
+ mov al,0
+ call set_text_color
+.row_draw:
+ mov bx,[V_FDINDEX]
+ shl bx,1
+ shl bx,1
+ shl bx,1
+ shl bx,1
+ shl bx,1
+ add bx,font_records+2
+ mov si,bx
  mov ax,148
- mov bx,267
+ mov bx,[V_FDROW]
+ shl bx,1
+ shl bx,1
+ shl bx,1
+ shl bx,1
+ add bx,149
+ mov cx,20
+ call draw_text
+ mov ax,15
+ call set_area
+.list_next:
+ inc word [V_FDROW]
+ jmp .list_row
+.list_done:
+
+ ; Scroll track and arrow buttons.
+ mov ax,7
+ call set_area
+ mov ax,410
+ mov bx,146
+ mov cx,432
+ mov dx,306
+ call fill_rect
+ mov ax,0
+ call set_text_color
+ mov si,up_arrow
+ mov ax,417
+ mov bx,157
+ mov cx,1
+ call draw_text
+ mov si,down_arrow
+ mov ax,417
+ mov bx,301
+ mov cx,1
+ call draw_text
+
+ ; Preview the highlighted typeface, including symbol and LED fonts.
+ mov bx,[V_FDSEL]
+ shl bx,1
+ shl bx,1
+ shl bx,1
+ shl bx,1
+ shl bx,1
+ mov cx,[cs:font_records+bx]
+ mov dx,18
+ mov ax,18
+ call set_font
+ mov si,font_sample
+ mov ax,146
+ mov bx,330
+ mov cx,font_sample_end-font_sample
+ call draw_text
+
+ ; GeoWrite-style Apply and Close buttons.
+ mov ax,7
+ call set_area
+ mov ax,154
+ mov bx,342
+ mov cx,246
+ mov dx,374
+ call fill_rect
+ mov ax,260
+ mov bx,342
+ mov cx,352
+ mov dx,374
+ call fill_rect
+ mov ax,0
+ call set_text_color
+ mov cx,FONT_DEFAULT
+ mov dx,12
+ mov ax,12
+ call set_font
+ mov si,apply_button
+ mov ax,162
+ mov bx,352
+ mov cx,apply_button_end-apply_button
+ call draw_text
+ mov si,close_button
+ mov ax,271
+ mov bx,352
+ mov cx,close_button_end-close_button
+ call draw_text
+ mov si,font_hint
+ mov ax,146
+ mov bx,382
  mov cx,font_hint_end-font_hint
  call draw_text
  ret
@@ -890,20 +1140,28 @@ status_end:
 codebuf: db '00'
 charbuf: db 0
 clip_name: db 'Zeichensatz Tabelle',0
-font_title: db 'Schriftart auswaehlen'
+font_title: db 'Weitere Schriften'
 font_title_end:
-build_stamp: db 'Build: 20261126-FONT12'
+build_stamp: db 'Build: 20261126-FONT13'
 build_stamp_end:
-font_label: db 'Schrift:'
+font_label: db 'Schriftart:'
 font_label_end:
-font_hint: db 'Pfeile + Enter bestaetigen; Esc schliesst'
+font_hint: db 'Pfeile: Auswahl; Enter: Uebernehmen; Esc: Schliessen'
 font_hint_end:
+copy_button: db 'Zeichen kopieren'
+copy_button_end:
+apply_button: db 'Uebernehmen'
+apply_button_end:
+close_button: db 'Schliessen'
+close_button_end:
 font_berkeley: db 'Berkeley'
 font_roman: db 'Roman   '
 font_sans: db 'Sans    '
 font_mono: db 'Mono    '
 font_sample: db 'Aa 0123'
 font_sample_end:
+up_arrow: db '^'
+down_arrow: db 'v'
 info_line1: db 'Zeichensatz Tabelle fuer GeoWorks 1'
 info_line1_end:
 info_line2: db 'Das Raster zeigt GEOS-Zeichencodes 00 bis FF.'
@@ -922,7 +1180,7 @@ help_line4: db 'Naechste/Vorige Schrift blaettert durch die Liste.'
 help_line4_end:
 help_line5: db 'Esc kehrt zur Zeichentabelle zurueck.'
 help_line5_end:
-font_ids: dw 0x0202,0x1000,0x1200,0x1a00
+%include "fontlist.inc"
 
 %include "g1clip.inc"
 G1_FINISH

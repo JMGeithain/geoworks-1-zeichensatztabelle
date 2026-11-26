@@ -1,4 +1,4 @@
-; SPDX-License-Identifier: MIT
+; SPDX-License-Identifier: Apache-2.0
 ; Text-to-clipboard helper for the observed Ensemble 1.2 / GeoWorks 1.28 ABI.
 ; Adapted from JMGeithain/geoworks-1-geozeit (app/g1clip.inc).
 ; DS:SI = GEOS text, CX = length, CS:DX = item name; CF signals failure.
@@ -161,3 +161,4 @@ g1_clip_text:
  xchg ax,bx
  pop ax
  ret
+

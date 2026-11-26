@@ -11,7 +11,8 @@ jeweilige GEOS-Zeichencode.
 - Zelle mit der Maus oder den Pfeiltasten auswählen.
 - Das native Menü **Schrift** in der GeoWorks-Menüleiste enthält die Einträge
   **Berkeley**, **Roman**, **Sans** und **Mono**. Wähle einen Eintrag, um die
-  Zeichentabelle mit dieser Schrift neu aufzubauen.
+  Zeichentabelle mit dieser Schrift neu aufzubauen. Die gewählte Schrift wird
+  unten neben der Build-Kennung angezeigt.
 - **C** oder **Leertaste** kopiert ein druckbares Zeichen in die Zwischenablage.
 - Steuerzeichen `00`–`1F` und `7F` sind als Code sichtbar und nicht kopierbar.
 

@@ -404,10 +404,36 @@ begin_direct:
  pop si
  or di,di
  jz .no
+ call set_window_origin
  clc
  ret
 .no:
  stc
+ ret
+
+; Apply the view origin to direct redraw GStates.
+set_window_origin:
+ push di
+ KCALL 440                       ; GrGetWinBounds
+ pop di
+ push ax
+ push bx
+ push cx
+ push dx
+ mov si,ax
+ or si,bx
+ jz .no_translation
+ mov dx,ax
+ xor cx,cx
+ xor ax,ax
+ push di
+ KCALL 310                       ; GrApplyTranslation
+ pop di
+.no_translation:
+ pop dx
+ pop cx
+ pop bx
+ pop ax
  ret
 ; AX/BX = point, DS:SI = bytes, CX = byte count. GState remains in DI.
 draw_text:
@@ -429,6 +455,12 @@ set_area:
 set_text_color:
  push di
  KCALL 359                       ; GrSetTextColor
+ pop di
+ ret
+
+set_text_style:
+ push di
+ KCALL 362                       ; GrSetTextStyle
  pop di
  ret
 
@@ -466,11 +498,17 @@ paint_table:
  mov dx,18
  mov ax,18
  call set_font
+ mov ax,0x0020
+ call set_text_style
+ mov al,15
+ call set_text_color
  mov ax,24
  mov bx,17
  mov si,title
  mov cx,title_end-title
  call draw_text
+ mov ax,0xff00
+ call set_text_style
  ; table grid: every cell shows its two-digit GEOS code. Printable values
  ; additionally show the actual glyph in the selected font.
  mov cx,[V_FONT]
@@ -710,7 +748,7 @@ charbuf: db 0
 clip_name: db 'Zeichensatz Tabelle',0
 font_title: db 'Schriftart auswaehlen'
 font_title_end:
-build_stamp: db 'Build: 20261126-FONT9'
+build_stamp: db 'Build: 20261126-FONT10'
 build_stamp_end:
 font_label: db 'Schrift:'
 font_label_end:

@@ -110,7 +110,7 @@ kbd_char:
  jb .pass
  cmp al,0x7f
  je .pass
- mov [charbuf],al
+ mov [cs:charbuf],al
  push ds
  push cs
  pop ds
@@ -291,11 +291,11 @@ paint_table:
  xor bx,bx
  mov bl,al
  mov al,[cs:hexchars+bx]
- mov [codebuf],al
+ mov [cs:codebuf],al
  xor bx,bx
  mov bl,ah
  mov al,[cs:hexchars+bx]
- mov [codebuf+1],al
+ mov [cs:codebuf+1],al
  mov ax,[V_COL]
  add ax,2
  mov bx,[V_ROW]
@@ -315,7 +315,7 @@ paint_table:
  cmp ax,0x7f
  je .next
  mov ax,[V_CODE]
- mov [charbuf],al
+ mov [cs:charbuf],al
  mov cx,FONT_ID
  mov dx,12
  mov ax,12
@@ -358,11 +358,11 @@ paint_table:
  xor bx,bx
  mov bl,al
  mov al,[cs:hexchars+bx]
- mov [codebuf],al
+ mov [cs:codebuf],al
  xor bx,bx
  mov bl,ah
  mov al,[cs:hexchars+bx]
- mov [codebuf+1],al
+ mov [cs:codebuf+1],al
  mov ax,106
  mov bx,390
  mov si,codebuf
@@ -377,7 +377,7 @@ paint_table:
  jb .status_done
  cmp al,0x7f
  je .status_done
- mov [charbuf],al
+ mov [cs:charbuf],al
  mov cx,FONT_ID
  mov dx,18
  mov ax,18
@@ -405,3 +405,4 @@ clip_name: db 'Zeichensatz Tabelle',0
 
 %include "g1clip.inc"
 G1_FINISH
+

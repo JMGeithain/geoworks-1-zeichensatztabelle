@@ -72,10 +72,10 @@ my @file_items=(['Zeichentabelle',0x0c20],['Zeichen kopieren',0x0c21],
 my @file_chunks=map { [0x30+$_*4,0x32+$_*4] } 0..$#file_items;
 my ($fontmenu,$fontmenu_m,$fontmenu_hints)=(0x40,0x42,0x44);
 my @font_items=(['Berkeley',0x0c10],['Roman',0x0c11],['Sans',0x0c12],['Mono',0x0c13],
-                ['Nächste Schrift',0x0c14],['Vorige Schrift',0x0c15],
                 ['Weitere Schriften...',0x0c16]);
 my @font_chunks=map { [0x46+$_*4,0x48+$_*4] } 0..$#font_items;
 my $vh=0x66;
+my ($tb,$tb_hints)=(0x74,0x72);
 my $view=$mkview->([$filemenu,SAME_BLOCK]);
 set16(\$view,0x18,$vh);
 set16(\$view,0x2e,0xd010);
@@ -88,11 +88,23 @@ my %chunks=(
     $filemenu=>[base(80,sibling=>[$fontmenu,SAME_BLOCK],child=>[$file_chunks[0][0],SAME_BLOCK],moniker=>$filemenu_m,hints=>$filemenu_hints).pack('C',2),3],
     $filemenu_m=>[moniker('Datei',0),2],
     $filemenu_hints=>[pack('vv',0x4005,4),2],
-    $fontmenu=>[base(80,sibling=>[$primary_h|1,SAME_BLOCK],child=>[$font_chunks[0][0],SAME_BLOCK],moniker=>$fontmenu_m,hints=>$fontmenu_hints).pack('C',2),3],
+    $fontmenu=>[base(80,sibling=>[$tb,SAME_BLOCK],child=>[$font_chunks[0][0],SAME_BLOCK],moniker=>$fontmenu_m,hints=>$fontmenu_hints).pack('C',2),3],
     $fontmenu_m=>[moniker('Schrift',5),2],
     $fontmenu_hints=>[pack('vv',0x4005,4),2],
     $vh=>[pack('v4',0x4015,4,0x4014,4),2]
 );
+# A real GEOS toolbar, with native GenTrigger buttons. GeoZeit uses the same
+# GenInteraction/GenTrigger pattern rather than drawing button-looking text.
+my @tools=(['Weitere Schriften...',0x0c16],['Zeichen kopieren',0x0c21]);
+$chunks{$tb}=[base(80,sibling=>[$primary_h|1,SAME_BLOCK],child=>[0x68,SAME_BLOCK],hints=>$tb_hints).pack('C',2),3];
+$chunks{$tb_hints}=[pack('vv',0x402b,4),2];
+for my $i (0..$#tools) {
+    my ($label,$msg)=@{$tools[$i]};
+    my $th=0x68+4*$i; my $mh=$th+2;
+    my $sibling=$i<$#tools ? [$th+4,SAME_BLOCK] : [$tb|1,SAME_BLOCK];
+    $chunks{$th}=[base(68,sibling=>$sibling,moniker=>$mh,states=>0xc004).pack('vvv',0x22,0x1005,$msg),7];
+    $chunks{$mh}=[moniker($label,0xff),2];
+}
 for my $i (0..$#file_items) {
     my ($label,$msg)=@{$file_items[$i]};
     my ($trigger,$mh)=@{$file_chunks[$i]};
@@ -110,7 +122,7 @@ for my $i (0..$#font_items) {
     $chunks{$mh}=[moniker($label,0),2];
 }
 $chunks{$view_h}[0]=$view;
-my $chunk_count=($vh+2-0x20)/2;
+my $chunk_count=($tb+2-0x20)/2;
 $chunk_count++ if $chunk_count%2;
 $res[3]{data}=object_block(3,\%chunks,$chunk_count);
 

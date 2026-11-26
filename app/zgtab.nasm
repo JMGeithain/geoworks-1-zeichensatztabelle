@@ -766,6 +766,17 @@ paint_table:
  call draw_text
  pop ds
 .status_done:
+ mov ax,0
+ call set_text_color
+ mov cx,[V_FONT]
+ mov dx,10
+ mov ax,10
+ call set_font
+ mov si,build_stamp
+ mov ax,16
+ mov bx,420
+ mov cx,build_stamp_end-build_stamp
+ call draw_text
  cmp word [V_FDOPEN],0
  je .no_font_dialog
  call paint_font_dialog
@@ -901,6 +912,8 @@ font_button: db 'Schrift F'
 font_button_end:
 font_title: db 'Schriftart auswaehlen'
 font_title_end:
+build_stamp: db 'Build: 20261126-FONT1'
+build_stamp_end:
 font_hint: db 'Pfeile + Enter bestaetigen; Esc schliesst'
 font_hint_end:
 font_none: db 'Keine .FNT-Dateien gefunden'

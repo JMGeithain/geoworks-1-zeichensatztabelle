@@ -22,6 +22,7 @@
 %define V_FDSEL   0xBA
 %define V_FDSTART 0xBC
 %define V_LSEG    0xBE
+%define V_LHAN    0xC0
 
 G1_METHOD 0x0a01, app_open
 G1_METHOD 0x0a03, app_close
@@ -38,14 +39,26 @@ app_open:
  mov word [V_FDOPEN],0
  mov word [V_FDSEL],0
  mov word [V_FDSTART],0
- mov ax,cs
+ mov word [V_LHAN],0
+ mov ax,0x0800
+ mov cx,0xc000
+ KCALL 0                         ; allocate FileEnum buffer block
+ jc .no_font_block
  mov [V_LSEG],ax
+ mov [V_LHAN],bx
  call font_scan
+.no_font_block:
  mov di,PROCESS_CLASS
  KCALL 489
  retf
 
 app_close:
+ mov bx,[V_LHAN]
+ or bx,bx
+ jz .no_font_block
+ KCALL 2                         ; release FileEnum buffer block
+ mov word [V_LHAN],0
+.no_font_block:
  xor cx,cx
  retf
 
@@ -326,6 +339,7 @@ font_dialog_open:
 ; Read installed .FNT headers using the proven GeoWorks 1 FileEnum layout.
 ; Results live in the writable tail of this code resource.
 font_scan:
+ mov es,[V_LSEG]
  mov word [cs:font_count],0
  KCALL 73 ; FilePushDir
  mov ax,0
@@ -365,9 +379,7 @@ font_scan:
  mov cx,22
  mul cx
  mov di,ax
- add di,font_entries
- mov ax,cs
- mov es,ax
+ mov es,[V_LSEG]
  test byte [es:di],0x10      ; skip directories
  jnz .skip
  lea bx,[di+9]
@@ -407,8 +419,8 @@ font_enum:
  mov [bp+6],ax
  mov ax,[cs:font_disk]
  mov [bp+8],ax
- mov word [bp+0x12],font_entries
- mov ax,cs
+ mov word [bp+0x12],0
+ mov ax,[V_LSEG]
  mov [bp+0x14],ax
  mov word [bp+0x16],80
  KCALL 65 ; FileEnum
@@ -458,8 +470,7 @@ font_read_header:                ; ES:BX = name in font_entries
  jae .done
  mov [cs:font_fname],bx
  push ds
- push cs
- pop ds
+ mov ds,[V_LSEG]
  mov dx,bx
  mov al,0x40
  KCALL 52 ; FileOpen
@@ -926,7 +937,6 @@ font_disk: dw 0
 font_fname: dw 0
 font_path: times 128 db 0
 font_tmp: times 256 db 0
-font_entries: times 80*22 db 0
 font_records: times 80*24 db 0
 
 %include "g1clip.inc"

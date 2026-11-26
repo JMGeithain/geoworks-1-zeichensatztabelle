@@ -89,7 +89,9 @@ for my $i (0..$#font_items) {
     my ($label,$msg)=@{$font_items[$i]};
     my ($trigger,$mh)=@{$font_chunks[$i]};
     my $sibling=$i<$#font_items ? [$font_chunks[$i+1][0],SAME_BLOCK] : [$fontmenu|1,SAME_BLOCK];
-    $chunks{$trigger}=[base(68,sibling=>$sibling,moniker=>$mh,states=>0xc004).pack('vvv',0,0x1000,$msg),7];
+    # Send the action to the custom VisContent object, which owns the table
+    # and handles these font-selection messages directly.
+    $chunks{$trigger}=[base(68,sibling=>$sibling,moniker=>$mh,states=>0xc004).pack('vvv',0x22,0x1005,$msg),7];
     $chunks{$mh}=[moniker($label,0),2];
 }
 $chunks{$view_h}[0]=$view;

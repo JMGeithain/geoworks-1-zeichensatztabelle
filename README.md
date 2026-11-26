@@ -4,7 +4,8 @@ Native 8086-Anwendung für das Ensemble 1.2 Profil des
 [PC/GEOS 1 SDK](https://github.com/dnesbitt142/pcgeos-1-sdk-v2). Sie zeigt die
 GEOS-Bytewerte `00` bis `FF` als 16×16-Raster. Druckbare Zeichen werden in der
 ausgewählten Schrift gezeichnet; die Hexadezimalzahl jeder Zelle ist der
-jeweilige GEOS-Zeichencode.
+jeweilige GEOS-Zeichencode. Die Zeichen werden größer als die Hexcodes
+dargestellt.
 
 ## Bedienung
 

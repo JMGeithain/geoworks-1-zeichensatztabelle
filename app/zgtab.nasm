@@ -317,13 +317,13 @@ paint_table:
  mov ax,[V_CODE]
  mov [cs:charbuf],al
  mov cx,FONT_ID
- mov dx,12
- mov ax,12
+ mov dx,10
+ mov ax,10
  call set_font
  mov ax,[V_COL]
- add ax,13
+ add ax,18
  mov bx,[V_ROW]
- add bx,8
+ add bx,2
  mov si,charbuf
  mov cx,1
  push ds

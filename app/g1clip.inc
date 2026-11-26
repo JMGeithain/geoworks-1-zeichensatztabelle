@@ -88,8 +88,8 @@ g1_clip_text:
  KCALL 149
  pop bp
  push bx
- ; ClipboardItemHeader is 0xe5 bytes in the GeoWorks 1 clipboard ABI.
- mov ax,0xe5
+ ; Match GeoZeit's working GeoWorks 1.28 transfer-item header (0x43 bytes).
+ mov ax,0x43
  mov cl,0x50
  mov ch,0x60
  push bp
@@ -100,12 +100,13 @@ g1_clip_text:
  mov [bp+10],bx
  mov es,ax
  xor di,di
- mov cx,0xe5
+ mov cx,0x43
  xor al,al
  rep stosb
- ; CIH_owner is stored as handle:chunk, normal item flags are zero.
- mov [es:0],dx
+ ; owner is chunk:handle; the item is a normal clipboard item.
+ mov word [es:0],0
  mov word [es:2],0
+ mov word [es:4],0x4000
  mov si,[bp+6]
  mov di,6
  mov cx,32
@@ -120,10 +121,10 @@ g1_clip_text:
 .name_end:
  mov byte [es:di],0
  mov word [es:0x27],1
- ; Source ID at 0x29 is already zero. Format info starts at 0x2d;
- ; CIF_TEXT is manufacturer 0/type 0, and its VMChain head is at 0x35.
+ ; The single format is CIF_TEXT (format id 0); its VM block is at 0x41.
+ mov word [es:0x29],0
  mov ax,[bp+12]
- mov [es:0x35],ax
+ mov [es:0x41],ax
  mov bx,[bp+10]
  push bp
  KCALL 6

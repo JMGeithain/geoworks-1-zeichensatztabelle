@@ -26,7 +26,8 @@ zugehörigen `.FNT`-Datei.
 - Steuerzeichen `00`–`1F` und `7F` sind als Code sichtbar und nicht kopierbar.
 - Beim Start ist `A` ausgewählt, damit der Kopierknopf direkt mit einem
   druckbaren Zeichen geprüft werden kann. Der Status zeigt Kopiererfolg oder
-  einen Clipboard-Fehler an.
+  einen Clipboard-Fehler an. Die Clipboard-Übergabe verwendet dieselbe
+  GeoWorks-1.28-Sequenz wie GeoZeit.
 - Das Anwendungsicon stammt aus `icon/icon_zst.pcx` und wird beim Bauen in
   GEOS-Monikergrößen umgewandelt.
 - **Datei** enthält Zeichentabelle, Zeichen kopieren, Info und Hilfe.

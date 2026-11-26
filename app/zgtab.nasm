@@ -1139,7 +1139,7 @@ charbuf: db 0
 clip_name: db 'Zeichensatz Tabelle',0
 font_title: db 'Weitere Schriften'
 font_title_end:
-build_stamp: db 'Build: 20261126-VGA6-CLIPFIX'
+build_stamp: db 'Build: 20261126-CLIPFIX2'
 build_stamp_end:
 font_label: db 'Schriftart:'
 font_label_end:

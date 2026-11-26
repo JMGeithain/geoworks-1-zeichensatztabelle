@@ -6,9 +6,9 @@
 %define PROCESS_CLASS 0x40
 %define FONT_DEFAULT 0x0202         ; Berkeley bitmap font
 %define GRID_X 16
-%define GRID_Y 80
+%define GRID_Y 45
 %define CELL_W 32
-%define CELL_H 20
+%define CELL_H 18
 
 ; These locations follow the process-data layout used by the SDK application
 ; template. They are private application state, not GEOS API structures.
@@ -26,6 +26,7 @@
 %define V_PANEL   0xC4
 %define V_FDROW   0xC6
 %define V_FDINDEX 0xC8
+%define V_COPY   0xCA
 %define VIS_CLASS 0x100
 %define VIS_RES   5
 %define VIS_CHUNK 0x22
@@ -94,6 +95,8 @@ app_open:
  push es
  pop ds
  mov word [V_FONT],FONT_DEFAULT
+ mov word [V_SEL],0x41
+ mov word [V_COPY],0
  mov word [V_FDOPEN],0
  mov word [V_FDSEL],0
  mov word [V_FDSTART],0
@@ -148,6 +151,7 @@ choose_help:
 choose_copy:
  VIS_ENTER
  call copy_selected
+ call redraw
  jmp vis_ret
 choose_all_fonts:
  VIS_ENTER
@@ -261,6 +265,7 @@ vis_kbd_char:
  jmp vis_ret
 .copy:
  call copy_selected
+ call redraw
  mov ax,0x8000
  jmp vis_ret
 .font_dialog:
@@ -330,13 +335,13 @@ vis_start_select:
  cmp word [V_FDOPEN],0
  jne .font_row
 .copy_grid_check:
- cmp cx,450
+ cmp cx,290
  jb .grid
- cmp cx,640
+ cmp cx,540
  jae .grid
- cmp dx,44
+ cmp dx,18
  jb .grid
- cmp dx,72
+ cmp dx,40
  jae .grid
  call font_dialog_open
  mov word [V_FDOPEN],1
@@ -352,7 +357,7 @@ vis_start_select:
  jl .pass
  cmp cx,512
  jae .pass
- cmp dx,320
+ cmp dx,288
  jae .pass
  mov ax,cx
  mov bl,CELL_W
@@ -502,6 +507,7 @@ font_keep_visible:
 
 copy_selected:
  mov al,[V_SEL]
+ mov byte [V_COPY],2
  cmp al,0x20
  jb .copy_done
  cmp al,0x7f
@@ -515,6 +521,11 @@ copy_selected:
  mov dx,clip_name
  call g1_clip_text
  pop ds
+ jc .copy_failed
+ mov byte [V_COPY],1
+ jmp .copy_done
+.copy_failed:
+ mov byte [V_COPY],3
 .copy_done:
  ret
 
@@ -613,33 +624,9 @@ paint_table:
  call set_area
  xor ax,ax
  xor bx,bx
- mov cx,640
- mov dx,450
+ mov cx,540
+ mov dx,390
  call fill_rect
-
- ; blue heading
- mov ax,1
- call set_area
- mov ax,12
- mov bx,10
- mov cx,628
- mov dx,42
- call fill_rect
- mov cx,FONT_DEFAULT
- mov dx,18
- mov ax,18
- call set_font
- mov ax,0x0020
- call set_text_style
- mov al,15
- call set_text_color
- mov ax,24
- mov bx,17
- mov si,title
- mov cx,title_end-title
- call draw_text
- mov ax,0xff00
- call set_text_style
  cmp word [V_PANEL],1
  je .info_page
  cmp word [V_PANEL],2
@@ -649,7 +636,7 @@ paint_table:
  mov ax,12
  call set_font
  mov ax,16
- mov bx,56
+ mov bx,4
  mov si,copy_field_label
  mov cx,copy_field_label_end-copy_field_label
  call draw_text
@@ -745,7 +732,7 @@ paint_table:
  call set_font
  mov si,status
  mov ax,16
- mov bx,410
+ mov bx,343
  mov cx,status_end-status
  call draw_text
  mov ax,[V_SEL]
@@ -760,7 +747,7 @@ paint_table:
  mov al,[cs:hexchars+bx]
  mov [cs:codebuf+1],al
  mov ax,106
- mov bx,410
+ mov bx,343
  mov si,codebuf
  mov cx,2
  push ds
@@ -768,6 +755,28 @@ paint_table:
  pop ds
  call draw_text
  pop ds
+ mov al,[V_COPY]
+ or al,al
+ jz .copy_status_done
+ cmp al,1
+ je .copy_success
+ cmp al,2
+ je .copy_control
+ mov si,copy_failed
+ mov cx,copy_failed_end-copy_failed
+ jmp .copy_status_draw
+.copy_success:
+ mov si,copy_success
+ mov cx,copy_success_end-copy_success
+ jmp .copy_status_draw
+.copy_control:
+ mov si,copy_control
+ mov cx,copy_control_end-copy_control
+.copy_status_draw:
+ mov ax,160
+ mov bx,343
+ call draw_text
+.copy_status_done:
  mov al,[V_SEL]
  cmp al,0x20
  jb .status_done
@@ -778,8 +787,8 @@ paint_table:
  mov dx,22
  mov ax,22
  call set_font
- mov ax,144
- mov bx,46
+ mov ax,26
+ mov bx,22
  mov si,charbuf
  mov cx,1
  push ds
@@ -795,8 +804,8 @@ paint_table:
  mov ax,10
  call set_font
  mov si,font_label
- mov ax,392
- mov bx,56
+ mov ax,290
+ mov bx,4
  mov cx,font_label_end-font_label
  call draw_text
  xor bx,bx
@@ -824,8 +833,8 @@ paint_table:
  call set_font
  mov si,[V_FDINDEX]
  add si,font_records+2
- mov ax,488
- mov bx,48
+ mov ax,300
+ mov bx,22
  mov cx,20
  call draw_text
  cmp word [V_FDOPEN],0
@@ -1069,7 +1078,7 @@ charbuf: db 0
 clip_name: db 'Zeichensatz Tabelle',0
 font_title: db 'Weitere Schriften'
 font_title_end:
-build_stamp: db 'Build: 20261126-FONT14'
+build_stamp: db 'Build: 20261126-FONT15'
 build_stamp_end:
 font_label: db 'Zeichensatz:'
 font_label_end:
@@ -1089,6 +1098,12 @@ font_sample: db 'Aa 0123'
 font_sample_end:
 up_arrow: db '^'
 down_arrow: db 'v'
+copy_success: db 'Kopiert'
+copy_success_end:
+copy_control: db 'Steuerzeichen nicht kopierbar'
+copy_control_end:
+copy_failed: db 'Clipboard-Fehler'
+copy_failed_end:
 info_line1: db 'Zeichensatztabelle Version 1.0'
 info_line1_end:
 info_line2: db 'f',0x81,'r GeoWorks 1.*'

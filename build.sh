@@ -15,6 +15,6 @@ perl sdk.pl check --project "$HERE/app"
 perl sdk.pl build --project "$HERE/app"
 mkdir -p "$HERE/out"
 SDK="$SDK" perl "$HERE/tools/postbuild.pl" \
-    "$SDK/build/zgtab/zgtab.geo" "$HERE/out/ZGTAB.GEO" 560 450
+    "$SDK/build/zgtab/zgtab.geo" "$HERE/out/ZGTAB.GEO" 640 450
 echo "Built: $HERE/out/ZGTAB.GEO"
 

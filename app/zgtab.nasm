@@ -7,9 +7,9 @@
 %define FONT_DEFAULT 0x0202         ; Berkeley bitmap font
 %define FONT_UI      0x0A00         ; Bison, compact labels and information
 %define GRID_X 16
-%define GRID_Y 45
+%define GRID_Y 60
 %define CELL_W 32
-%define CELL_H 18
+%define CELL_H 16
 
 ; These locations follow the process-data layout used by the SDK application
 ; template. They are private application state, not GEOS API structures.
@@ -336,7 +336,7 @@ vis_start_select:
  cmp word [V_FDOPEN],0
  jne .font_row
 .copy_grid_check:
- cmp cx,290
+ cmp cx,340
  jb .grid
  cmp cx,540
  jae .grid
@@ -358,7 +358,7 @@ vis_start_select:
  jl .pass
  cmp cx,512
  jae .pass
- cmp dx,288
+ cmp dx,256
  jae .pass
  mov ax,cx
  mov bl,CELL_W
@@ -647,7 +647,33 @@ paint_table:
  mov si,copy_field_label
  mov cx,copy_field_label_end-copy_field_label
  call draw_text
- ; The grid shows glyphs only; the selected byte value is shown below.
+ ; Put the selected byte code on the same header line as the labels.
+ mov si,status
+ mov ax,180
+ mov bx,4
+ mov cx,status_end-status
+ call draw_text
+ mov ax,[V_SEL]
+ mov bl,16
+ div bl
+ xor bx,bx
+ mov bl,al
+ mov al,[cs:hexchars+bx]
+ mov [cs:codebuf],al
+ xor bx,bx
+ mov bl,ah
+ mov al,[cs:hexchars+bx]
+ mov [cs:codebuf+1],al
+ mov ax,254
+ mov bx,4
+ mov si,codebuf
+ mov cx,2
+ push ds
+ push cs
+ pop ds
+ call draw_text
+ pop ds
+ ; The grid shows glyphs only; the selected byte value is shown above.
  mov cx,[V_FONT]
  mov dx,8
  mov ax,8
@@ -659,14 +685,11 @@ paint_table:
  div bl                          ; AL=row, AH=column
  xor bx,bx
  mov bl,al
- mov cx,bx
  shl bx,1
  shl bx,1
  shl bx,1
  shl bx,1
- shl cx,1
- shl cx,1
- add bx,cx                       ; row * 20
+                                  ; row * 16
  add bx,GRID_Y
  mov [V_ROW],bx
  xor bx,bx
@@ -730,38 +753,13 @@ paint_table:
  cmp word [V_CODE],256
  jb .cell
 
- ; Selection status beneath the grid.
+ ; Copy status beneath the grid.
  mov ax,0
  call set_text_color
  mov cx,FONT_UI
  mov dx,10
  mov ax,10
  call set_font
- mov si,status
- mov ax,16
- mov bx,343
- mov cx,status_end-status
- call draw_text
- mov ax,[V_SEL]
- mov bl,16
- div bl
- xor bx,bx
- mov bl,al
- mov al,[cs:hexchars+bx]
- mov [cs:codebuf],al
- xor bx,bx
- mov bl,ah
- mov al,[cs:hexchars+bx]
- mov [cs:codebuf+1],al
- mov ax,106
- mov bx,343
- mov si,codebuf
- mov cx,2
- push ds
- push cs
- pop ds
- call draw_text
- pop ds
  mov al,[V_COPY]
  or al,al
  jz .copy_status_done
@@ -811,7 +809,7 @@ paint_table:
  mov ax,10
  call set_font
  mov si,font_label
- mov ax,290
+ mov ax,350
  mov bx,4
  mov cx,font_label_end-font_label
  call draw_text
@@ -840,7 +838,7 @@ paint_table:
  call set_font
  mov si,[V_FDINDEX]
  add si,font_records+2
- mov ax,300
+ mov ax,350
  mov bx,22
  mov cx,20
  call draw_text
@@ -1085,9 +1083,9 @@ charbuf: db 0
 clip_name: db 'Zeichensatz Tabelle',0
 font_title: db 'Weitere Schriften'
 font_title_end:
-build_stamp: db 'Build: 20261126-VGA2-BISON'
+build_stamp: db 'Build: 20261126-VGA3-UIFIX'
 build_stamp_end:
-font_label: db 'Zeichensatz:'
+font_label: db 'Schriftart:'
 font_label_end:
 font_hint: db 'Pfeile: Auswahl; Enter: Uebernehmen; Esc: Schliessen'
 font_hint_end:

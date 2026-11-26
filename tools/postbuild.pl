@@ -106,14 +106,14 @@ for my $i (0..$#tools) {
     my ($label,$msg)=@{$tools[$i]};
     my $th=0x68+4*$i; my $mh=$th+2;
     my $sibling=$i<$#tools ? [$th+4,SAME_BLOCK] : [$tb|1,SAME_BLOCK];
-    $chunks{$th}=[base(68,sibling=>$sibling,moniker=>$mh,states=>0xc004).pack('vvv',0x22,0x1005,$msg),7];
+    $chunks{$th}=[base(68,sibling=>$sibling,moniker=>$mh,states=>0xc004).pack('vvv',0x22,0x1000|$vis_res,$msg),7];
     $chunks{$mh}=[moniker($label,0xff),2];
 }
 for my $i (0..$#file_items) {
     my ($label,$msg)=@{$file_items[$i]};
     my ($trigger,$mh)=@{$file_chunks[$i]};
     my $sibling=$i<$#file_items ? [$file_chunks[$i+1][0],SAME_BLOCK] : [$filemenu|1,SAME_BLOCK];
-    $chunks{$trigger}=[base(68,sibling=>$sibling,moniker=>$mh,states=>0xc004).pack('vvv',0x22,0x1005,$msg),7];
+    $chunks{$trigger}=[base(68,sibling=>$sibling,moniker=>$mh,states=>0xc004).pack('vvv',0x22,0x1000|$vis_res,$msg),7];
     $chunks{$mh}=[moniker($label,0),2];
 }
 for my $i (0..$#font_items) {
@@ -122,7 +122,7 @@ for my $i (0..$#font_items) {
     my $sibling=$i<$#font_items ? [$font_chunks[$i+1][0],SAME_BLOCK] : [$fontmenu|1,SAME_BLOCK];
     # Send the action to the custom VisContent object, which owns the table
     # and handles these font-selection messages directly.
-    $chunks{$trigger}=[base(68,sibling=>$sibling,moniker=>$mh,states=>0xc004).pack('vvv',0x22,0x1005,$msg),7];
+    $chunks{$trigger}=[base(68,sibling=>$sibling,moniker=>$mh,states=>0xc004).pack('vvv',0x22,0x1000|$vis_res,$msg),7];
     $chunks{$mh}=[moniker($label,0),2];
 }
 $chunks{$view_h}[0]=$view;

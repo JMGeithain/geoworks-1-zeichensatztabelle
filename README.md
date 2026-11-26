@@ -7,7 +7,8 @@ ausgewählten Schrift und vergrößert gezeichnet. In den Rasterzellen erscheine
 keine Hexcodes; der Code des markierten Zeichens steht unten neben der Auswahl.
 Kleine Beschriftungen und Informationen verwenden Bison. Der Name der aktiven
 Schrift wird größer in dieser Schrift dargestellt; bei Symbol- und LED-Schriften
-bleibt der Name zur Lesbarkeit in Berkeley.
+bleibt der Name zur Lesbarkeit in Berkeley. Der ausgewählte Zeichencode steht
+oben neben dem Zeichenfeld.
 
 ## Bedienung
 

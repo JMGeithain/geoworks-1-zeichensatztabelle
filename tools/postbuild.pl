@@ -153,7 +153,7 @@ my $inst=pack('H*','01600000060000000000f3018f01d878f000000000000000000000000000
 my $at=index($inst,pack('vv',0x46,0x100d));
 die "view link not found in the Vis instance\n" if $at<0;
 substr($inst,$at,4)=pack('vv',0x28,0x1003);
-substr($inst,10,4)=pack('vv',3999,2999);
+substr($inst,10,4)=pack('vv',$w-1,$h-1);
 my $vis=object_block($vis_res,{0x22=>[$inst,3]},2);
 my $fp=unpack('v',substr($vis,0x20,2));
 substr($vis,$fp+1,1)=pack('C',3);
@@ -170,3 +170,4 @@ my $new=build_geode(
 open my $f,'>:raw',$out or die "$out: $!";
 print $f $new->{raw}; close $f;
 printf "%s: %d bytes, %d resources, Vis input class and application icon installed\n",$out,length($new->{raw}),scalar @res;
+

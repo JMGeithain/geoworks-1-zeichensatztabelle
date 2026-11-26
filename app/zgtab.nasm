@@ -8,8 +8,8 @@
 %define FONT_UI      0x0A00         ; Bison, compact labels and information
 %define GRID_X 16
 %define GRID_Y 60
-%define CELL_W 32
-%define CELL_H 16
+%define CELL_W 30
+%define CELL_H 15
 
 ; These locations follow the process-data layout used by the SDK application
 ; template. They are private application state, not GEOS API structures.
@@ -338,7 +338,7 @@ vis_start_select:
 .copy_grid_check:
  cmp cx,340
  jb .grid
- cmp cx,540
+ cmp cx,500
  jae .grid
  cmp dx,18
  jb .grid
@@ -356,9 +356,9 @@ vis_start_select:
  jl .pass
  cmp dx,0
  jl .pass
- cmp cx,512
+ cmp cx,480
  jae .pass
- cmp dx,256
+ cmp dx,240
  jae .pass
  mov ax,cx
  mov bl,CELL_W
@@ -619,26 +619,14 @@ fill_rect:
  pop di
  ret
 
-set_line_color:
- push di
- KCALL 346                       ; GrSetLineColor
- pop di
- ret
-
-draw_frame:
- push di
- KCALL 316                       ; GrDrawRect
- pop di
- ret
-
 paint_table:
  ; white window background
  mov ax,15
  call set_area
  xor ax,ax
  xor bx,bx
- mov cx,540
- mov dx,390
+ mov cx,500
+ mov dx,350
  call fill_rect
  cmp word [V_PANEL],1
  je .info_page
@@ -759,14 +747,29 @@ paint_table:
  cmp word [V_CODE],256
  jb .cell
 
- ; Frame the complete character table.
- mov al,0
- call set_line_color
- mov ax,GRID_X-4
- mov bx,GRID_Y-4
- mov cx,GRID_X+16*CELL_W+3
- mov dx,GRID_Y+16*CELL_H+3
- call draw_frame
+ ; Frame the complete character table with the already verified fill call.
+ mov ax,0
+ call set_area
+ mov ax,GRID_X-2
+ mov bx,GRID_Y-2
+ mov cx,GRID_X+16*CELL_W+1
+ mov dx,GRID_Y-1
+ call fill_rect
+ mov ax,GRID_X-2
+ mov bx,GRID_Y+16*CELL_H+1
+ mov cx,GRID_X+16*CELL_W+1
+ mov dx,GRID_Y+16*CELL_H+2
+ call fill_rect
+ mov ax,GRID_X-2
+ mov bx,GRID_Y-1
+ mov cx,GRID_X-1
+ mov dx,GRID_Y+16*CELL_H+2
+ call fill_rect
+ mov ax,GRID_X+16*CELL_W
+ mov bx,GRID_Y-1
+ mov cx,GRID_X+16*CELL_W+1
+ mov dx,GRID_Y+16*CELL_H+2
+ call fill_rect
 
  ; Copy status beneath the grid.
  mov ax,0
@@ -794,7 +797,7 @@ paint_table:
  mov cx,copy_control_end-copy_control
 .copy_status_draw:
  mov ax,160
- mov bx,343
+ mov bx,327
  call draw_text
 .copy_status_done:
  mov al,[V_SEL]
@@ -824,7 +827,7 @@ paint_table:
  mov ax,10
  call set_font
  mov si,font_label
- mov ax,350
+ mov ax,310
  mov bx,4
  mov cx,font_label_end-font_label
  call draw_text
@@ -861,7 +864,7 @@ paint_table:
  mov si,font_berkeley
  mov cx,font_berkeley_end-font_berkeley
 .draw_font_name:
- mov ax,350
+ mov ax,310
  mov bx,22
  call draw_text
  cmp word [V_FDINDEX],0xffff
@@ -871,7 +874,7 @@ paint_table:
  mov ax,10
  call set_font
  mov si,dos_file_label
- mov ax,350
+ mov ax,310
  mov bx,42
  mov cx,dos_file_label_end-dos_file_label
  call draw_text
@@ -1136,7 +1139,7 @@ charbuf: db 0
 clip_name: db 'Zeichensatz Tabelle',0
 font_title: db 'Weitere Schriften'
 font_title_end:
-build_stamp: db 'Build: 20261126-VGA5-CLIPFIX'
+build_stamp: db 'Build: 20261126-VGA6-CLIPFIX'
 build_stamp_end:
 font_label: db 'Schriftart:'
 font_label_end:

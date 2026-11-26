@@ -923,7 +923,7 @@ font_button: db 'Schrift F'
 font_button_end:
 font_title: db 'Schriftart auswaehlen'
 font_title_end:
-build_stamp: db 'Build: 20261126-FONT1'
+build_stamp: db 'Build: 20261126-FONT2'
 build_stamp_end:
 font_hint: db 'Pfeile + Enter bestaetigen; Esc schliesst'
 font_hint_end:

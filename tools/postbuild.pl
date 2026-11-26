@@ -72,9 +72,10 @@ my @file_items=(['Zeichentabelle',0x0c20],['Zeichen kopieren',0x0c21],
 my @file_chunks=map { [0x30+$_*4,0x32+$_*4] } 0..$#file_items;
 my ($fontmenu,$fontmenu_m,$fontmenu_hints)=(0x40,0x42,0x44);
 my @font_items=(['Berkeley',0x0c10],['Roman',0x0c11],['Sans',0x0c12],['Mono',0x0c13],
-                ['Nächste Schrift',0x0c14],['Vorige Schrift',0x0c15]);
+                ['Nächste Schrift',0x0c14],['Vorige Schrift',0x0c15],
+                ['Weitere Schriften...',0x0c16]);
 my @font_chunks=map { [0x46+$_*4,0x48+$_*4] } 0..$#font_items;
-my $vh=0x5e;
+my $vh=0x66;
 my $view=$mkview->([$filemenu,SAME_BLOCK]);
 set16(\$view,0x18,$vh);
 set16(\$view,0x2e,0xd010);

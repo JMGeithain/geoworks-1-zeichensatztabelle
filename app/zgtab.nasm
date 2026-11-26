@@ -1158,7 +1158,7 @@ charbuf: db 0
 clip_name: db 'Zeichensatz Tabelle',0
 font_title: db 'Weitere Schriften'
 font_title_end:
-build_stamp: db 'Build: 20261126-VGA10-MENUHELP'
+build_stamp: db 'Build: 20261126-VGA11-MENUK'
 build_stamp_end:
 font_label: db 'Schriftart:'
 font_label_end:

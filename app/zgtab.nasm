@@ -952,28 +952,39 @@ paint_info_page:
  ret
 
 paint_help_page:
- mov cx,FONT_UI
- mov dx,10
- mov ax,10
+ ; Follow GeoZeit's help/info page hierarchy: Berkeley title and body,
+ ; with a clear 18-point heading and comfortably spaced 12-point text.
+ mov cx,FONT_DEFAULT
+ mov dx,18
+ mov ax,18
  call set_font
  mov ax,24
- mov bx,78
+ mov bx,42
+ mov si,help_title
+ mov cx,help_title_end-help_title
+ call draw_text
+ mov cx,FONT_DEFAULT
+ mov dx,12
+ mov ax,12
+ call set_font
+ mov ax,24
+ mov bx,82
  mov si,help_line1
  mov cx,help_line1_end-help_line1
  call draw_text
- mov bx,108
+ mov bx,112
  mov si,help_line2
  mov cx,help_line2_end-help_line2
  call draw_text
- mov bx,138
+ mov bx,142
  mov si,help_line3
  mov cx,help_line3_end-help_line3
  call draw_text
- mov bx,168
+ mov bx,172
  mov si,help_line4
  mov cx,help_line4_end-help_line4
  call draw_text
- mov bx,198
+ mov bx,202
  mov si,help_line5
  mov cx,help_line5_end-help_line5
  call draw_text
@@ -1147,7 +1158,7 @@ charbuf: db 0
 clip_name: db 'Zeichensatz Tabelle',0
 font_title: db 'Weitere Schriften'
 font_title_end:
-build_stamp: db 'Build: 20261126-VGA7-CLIPFIX2'
+build_stamp: db 'Build: 20261126-VGA8-HELP'
 build_stamp_end:
 font_label: db 'Schriftart:'
 font_label_end:
@@ -1186,13 +1197,15 @@ info_line4: db 'Apache-Lizenz 2.0'
 info_line4_end:
 info_line5: db 'GEOS-Zeichencodes 00 bis FF (kein Unicode).'
 info_line5_end:
-help_line1: db 'Zeichensatztabelle fuer GeoWorks 1.*'
+help_title: db 'Hilfe'
+help_title_end:
+help_line1: db 'Zeichen mit der Maus anklicken oder mit Pfeiltasten waehlen.'
 help_line1_end:
-help_line2: db 'Zelle anklicken oder mit Pfeiltasten auswaehlen.'
+help_line2: db 'Vorschau und Hex-Code zeigen das ausgewaehlte Zeichen.'
 help_line2_end:
-help_line3: db 'Hex-Code und Zeichen stehen unten bei Auswahl.'
+help_line3: db 'Zeichen kopieren legt das Zeichen in die Zwischenablage.'
 help_line3_end:
-help_line4: db 'Zeichen kopieren uebertraegt druckbare Zeichen.'
+help_line4: db 'Weitere Schriften zeigt installierte Fonts zur Auswahl.'
 help_line4_end:
 help_line5: db 'Steuercodes 00-1F und 7F sind nicht kopierbar.'
 help_line5_end:

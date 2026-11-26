@@ -21,8 +21,45 @@
 %define V_FDOPEN  0xB8
 %define V_FDSEL   0xBA
 %define V_FDSTART 0xBC
-%define V_LSEG    0xBE
-%define V_LHAN    0xC0
+%macro FONT_ROW 3
+ mov ax,0
+ cmp word [V_FDSEL],%1
+ jne %%normal
+ mov ax,1
+ mov al,15
+ call set_text_color
+ jmp %%text_done
+%%normal:
+ mov al,0
+ call set_text_color
+%%text_done:
+ mov ax,0
+ cmp word [V_FDSEL],%1
+ jne %%area_normal
+ mov ax,1
+%%area_normal:
+ call set_area
+ mov ax,140
+ mov bx,146+%1*28
+ mov cx,420
+ mov dx,bx
+ add dx,24
+ call fill_rect
+ mov cx,%2
+ mov dx,14
+ mov ax,14
+ call set_font
+ mov ax,154
+ mov bx,150+%1*28
+ mov si,%3
+ mov cx,8
+ call draw_text
+ mov ax,326
+ mov bx,150+%1*28
+ mov si,font_sample
+ mov cx,font_sample_end-font_sample
+ call draw_text
+%endmacro
 
 G1_METHOD 0x0a01, app_open
 G1_METHOD 0x0a03, app_close
@@ -39,26 +76,11 @@ app_open:
  mov word [V_FDOPEN],0
  mov word [V_FDSEL],0
  mov word [V_FDSTART],0
- mov word [V_LHAN],0
- mov ax,0x0800
- mov cx,0xc000
- KCALL 0                         ; allocate FileEnum buffer block
- jc .no_font_block
- mov [V_LSEG],ax
- mov [V_LHAN],bx
- call font_scan
-.no_font_block:
  mov di,PROCESS_CLASS
  KCALL 489
  retf
 
 app_close:
- mov bx,[V_LHAN]
- or bx,bx
- jz .no_font_block
- KCALL 2                         ; release FileEnum buffer block
- mov word [V_LHAN],0
-.no_font_block:
  xor cx,cx
  retf
 
@@ -173,7 +195,7 @@ kbd_char:
 .font_down:
  mov ax,[V_FDSEL]
  inc ax
- cmp ax,[cs:font_count]
+ cmp ax,4
  jae .font_eat
  mov [V_FDSEL],ax
  mov bx,[V_FDSTART]
@@ -186,14 +208,9 @@ kbd_char:
  call redraw
  jmp .font_eat
 .font_apply:
- mov ax,[cs:font_count]
- or ax,ax
- jz .font_cancel
- mov ax,[V_FDSEL]
- mov cx,24
- mul cx
- mov bx,ax
- mov ax,[cs:font_records+bx+21]
+ mov bx,[V_FDSEL]
+ shl bx,1
+ mov ax,[cs:font_ids+bx]
  mov [V_FONT],ax
  mov word [V_FDOPEN],0
  call redraw
@@ -289,16 +306,12 @@ mouse_select:
  xor ah,ah
  cmp al,3
  ja .font_mouse_close
+ cmp ax,3
+ ja .font_mouse_close
+ mov [V_FDSEL],ax
  mov bx,ax
- add bx,[V_FDSTART]
- cmp bx,[cs:font_count]
- jae .font_mouse_close
- mov [V_FDSEL],bx
- mov ax,bx
- mov cx,24
- mul cx
- mov bx,ax
- mov ax,[cs:font_records+bx+21]
+ shl bx,1
+ mov ax,[cs:font_ids+bx]
  mov [V_FONT],ax
 .font_mouse_close:
  mov word [V_FDOPEN],0
@@ -308,236 +321,21 @@ mouse_select:
 
 font_dialog_open:
  mov word [V_FDSEL],0
- mov word [V_FDSTART],0
- mov cx,[cs:font_count]
  xor si,si
 .find:
- cmp si,cx
- jae .scroll
- mov ax,si
- push cx
- mov cx,24
- mul cx
- mov bx,ax
- mov ax,[cs:font_records+bx+21]
- pop cx
+ cmp si,4
+ jae .done
+ mov bx,si
+ shl bx,1
+ mov ax,[cs:font_ids+bx]
  cmp ax,[V_FONT]
  je .found
  inc si
  jmp .find
 .found:
  mov [V_FDSEL],si
-.scroll:
- cmp word [V_FDSEL],4
- jb .done
- mov ax,[V_FDSEL]
- sub ax,3
- mov [V_FDSTART],ax
 .done:
  ret
-
-; Read installed .FNT headers using the proven GeoWorks 1 FileEnum layout.
-; Results live in the writable tail of this code resource.
-font_scan:
- mov es,[V_LSEG]
- mov word [cs:font_count],0
- KCALL 73 ; FilePushDir
- mov ax,0
- KCALL 76 ; FileSetStandardPath SP_TOP
- jc .pop
- push ds
- push cs
- pop ds
- xor bx,bx
- mov dx,font_directory
- KCALL 51 ; FileSetCurrentPath FONT
- pop ds
- jc .pop
- push ds
- push cs
- pop ds
- mov si,font_path
- mov byte [si],0
- mov cx,120
- KCALL 75 ; FileGetCurrentPath -> BX disk
- pop ds
- jc .pop
- mov [cs:font_disk],bx
- call font_enum
- jc .pop
- cmp bx,80
- jbe .count_ok
- mov bx,80
-.count_ok:
- xor si,si
-.entry:
- cmp si,bx
- jae .pop
- push si
- push bx
- mov ax,si
- mov cx,22
- mul cx
- mov di,ax
- mov es,[V_LSEG]
- test byte [es:di],0x10      ; skip directories
- jnz .skip
- lea bx,[di+9]
- cmp byte [es:bx],0
- jne .name_ok
- inc bx
-.name_ok:
- call font_is_fnt
- jc .skip
- call font_read_header
-.skip:
- pop bx
- pop si
- inc si
- jmp .entry
-.pop:
- KCALL 74 ; FilePopDir
-.return:
- ret
-
-font_enum:
- push bp
- sub sp,0x30
- mov bp,sp
- push ss
- pop es
- mov di,sp
- cld
- xor ax,ax
- mov cx,0x18
- rep stosw
- mov byte [bp+0],0xfc
- mov word [bp+1],0x4000
- mov byte [bp+3],0x20
- mov word [bp+4],font_path
- mov ax,cs
- mov [bp+6],ax
- mov ax,[cs:font_disk]
- mov [bp+8],ax
- mov word [bp+0x12],0
- mov ax,[V_LSEG]
- mov [bp+0x14],ax
- mov word [bp+0x16],80
- KCALL 65 ; FileEnum
- pop bp
- ret
-
-font_is_fnt:                    ; ES:BX = candidate NUL file name
- push ax
- push si
- mov si,bx
-.end:
- cmp byte [es:si],0
- je .check
- inc si
- jmp .end
-.check:
- mov ax,si
- sub ax,bx
- cmp ax,5
- jb .no
- cmp byte [es:si-4],'.'
- jne .no
- mov al,[es:si-3]
- and al,0xdf
- cmp al,'F'
- jne .no
- mov al,[es:si-2]
- and al,0xdf
- cmp al,'N'
- jne .no
- mov al,[es:si-1]
- and al,0xdf
- cmp al,'T'
- jne .no
- pop si
- pop ax
- clc
- ret
-.no:
- pop si
- pop ax
- stc
- ret
-
-font_read_header:                ; ES:BX = name in font_entries
- cmp word [cs:font_count],80
- jae .done
- mov [cs:font_fname],bx
- push ds
- mov ds,[V_LSEG]
- mov dx,bx
- mov al,0x40
- KCALL 52 ; FileOpen
- pop ds
- jc .done
- mov bx,ax
- push bx
- push ds
- push cs
- pop ds
- mov dx,font_tmp
- mov cx,256
- mov al,0
- KCALL 58 ; FileRead
- pop ds
- pop bx
- jc .close
- cmp cx,0x29
- jb .close
- push bx
- mov al,0
- KCALL 54 ; FileClose
- pop bx
- cmp word [cs:font_tmp],'BS'
- jne .done
- cmp word [cs:font_tmp+2],'WF'
- jne .done
- mov ax,[cs:font_count]
- mov cx,24
- mul cx
- mov di,ax
- add di,font_records
- mov ax,cs
- mov es,ax
- mov cx,12
- xor ax,ax
- rep stosw
- mov si,font_tmp+0x0d
- mov ax,[cs:font_count]
- mov cx,24
- mul cx
- mov di,ax
- add di,font_records
- mov cx,20
-.copy_name:
- mov al,[cs:si]
- inc si
- or al,al
- jz .name_done
- mov [cs:di],al
- inc di
- loop .copy_name
-.name_done:
- mov ax,[cs:font_count]
- mov cx,24
- mul cx
- mov bx,ax
- mov ax,[cs:font_tmp+8]
- mov [cs:font_records+bx+21],ax
- inc word [cs:font_count]
- jmp .done
-.close:
- mov al,0
- KCALL 54 ; FileClose
-.done:
- ret
-
 redraw:
  cmp word [V_WIN],0
  je .done
@@ -813,93 +611,10 @@ paint_font_dialog:
  mov bx,120
  mov cx,font_title_end-font_title
  call draw_text
- mov ax,[cs:font_count]
- or ax,ax
- jnz .rows_start
- mov si,font_none
- mov ax,148
- mov bx,160
- mov cx,font_none_end-font_none
- call draw_text
- jmp .hint
-.rows_start:
- mov word [V_ROW],0
-.row:
- mov ax,[V_FDSTART]
- add ax,[V_ROW]
- cmp ax,[cs:font_count]
- jae .hint
- mov [V_CODE],ax
- cmp ax,[V_FDSEL]
- jne .row_normal
- mov ax,1
- mov al,15
- call set_text_color
- jmp .row_color
-.row_normal:
- mov al,0
- call set_text_color
-.row_color:
- mov ax,[V_CODE]
- cmp ax,[V_FDSEL]
- jne .area_normal
- mov ax,1
-.area_normal:
- call set_area
- mov ax,[V_ROW]
- mov bx,28
- mul bx
- add ax,146
- mov bx,ax
- mov cx,420
- mov dx,ax
- add dx,24
- mov ax,140
- call fill_rect
- mov ax,[V_CODE]
- mov cx,24
- mul cx
- mov bx,ax
- mov cx,[cs:font_records+bx+21]
- mov dx,14
- mov ax,14
- call set_font
- mov ax,[V_CODE]
- mov cx,24
- mul cx
- mov bx,ax
- mov si,font_records
- add si,bx
- mov ax,[V_ROW]
- mov cx,28
- mul cx
- add ax,150
- mov bx,ax
- mov ax,154
- xor cx,cx
- call draw_text
- mov ax,[V_CODE]
- mov cx,24
- mul cx
- mov bx,ax
- mov cx,[cs:font_records+bx+21]
- mov dx,14
- mov ax,14
- call set_font
- mov ax,326
- mov ax,[V_ROW]
- mov cx,28
- mul cx
- add ax,150
- mov bx,ax
- mov ax,326
- mov si,font_sample
- mov cx,font_sample_end-font_sample
- call draw_text
- inc word [V_ROW]
- cmp word [V_ROW],4
- jb .row
-.hint:
+ FONT_ROW 0,0x0202,font_berkeley
+ FONT_ROW 1,0x1000,font_roman
+ FONT_ROW 2,0x1200,font_sans
+ FONT_ROW 3,0x1a00,font_mono
  mov cx,[V_FONT]
  mov dx,10
  mov ax,10
@@ -910,7 +625,6 @@ paint_font_dialog:
  mov cx,font_hint_end-font_hint
  call draw_text
  ret
-
 hexchars: db '0123456789ABCDEF'
 title: db 'Zeichensatz Tabelle - GEOS 1'
 title_end:
@@ -923,24 +637,22 @@ font_button: db 'Schrift F'
 font_button_end:
 font_title: db 'Schriftart auswaehlen'
 font_title_end:
-build_stamp: db 'Build: 20261126-FONT2'
+build_stamp: db 'Build: 20261126-FONT3'
 build_stamp_end:
 font_hint: db 'Pfeile + Enter bestaetigen; Esc schliesst'
 font_hint_end:
-font_none: db 'Keine .FNT-Dateien gefunden'
-font_none_end:
+font_berkeley: db 'Berkeley'
+font_roman: db 'Roman   '
+font_sans: db 'Sans    '
+font_mono: db 'Mono    '
 font_sample: db 'Aa 0123'
 font_sample_end:
-font_directory: db 'FONT',0
-font_count: dw 0
-font_disk: dw 0
-font_fname: dw 0
-font_path: times 128 db 0
-font_tmp: times 256 db 0
-font_records: times 80*24 db 0
+font_ids: dw 0x0202,0x1000,0x1200,0x1a00
 
 %include "g1clip.inc"
 G1_FINISH
+
+
 
 
 

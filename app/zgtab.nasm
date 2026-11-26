@@ -131,6 +131,7 @@ view_closed:
 
 vis_draw:
  VIS_ENTER
+ mov word [V_WIN],1
  mov di,bp
  call paint_table
  jmp vis_ret
@@ -709,7 +710,7 @@ charbuf: db 0
 clip_name: db 'Zeichensatz Tabelle',0
 font_title: db 'Schriftart auswaehlen'
 font_title_end:
-build_stamp: db 'Build: 20261126-FONT8'
+build_stamp: db 'Build: 20261126-FONT9'
 build_stamp_end:
 font_label: db 'Schrift:'
 font_label_end:

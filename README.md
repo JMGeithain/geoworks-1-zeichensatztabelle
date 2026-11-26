@@ -3,12 +3,16 @@
 Native 8086-Anwendung für das Ensemble 1.2 Profil des
 [PC/GEOS 1 SDK](https://github.com/dnesbitt142/pcgeos-1-sdk-v2). Sie zeigt die
 GEOS-Bytewerte `00` bis `FF` als 16×16-Raster. Druckbare Zeichen werden in der
-Berkeley-Schrift gezeichnet; die Hexadezimalzahl jeder Zelle ist der jeweilige
-GEOS-Zeichencode.
+ausgewählten Schrift gezeichnet; die Hexadezimalzahl jeder Zelle ist der
+jeweilige GEOS-Zeichencode.
 
 ## Bedienung
 
 - Zelle mit der Maus oder den Pfeiltasten auswählen.
+- **Schrift F** oder **F** öffnet den Schriftartdialog. Die App liest die
+  installierten `.FNT`-Dateien aus `GEOWORKS\FONT` und zeigt Namen samt
+  Schriftprobe. Mit Pfeil hoch/runter und Enter wählen; Esc schließt den Dialog.
+  Ein Mausklick auf eine Schrift übernimmt sie sofort.
 - **C** oder **Leertaste** kopiert ein druckbares Zeichen in die Zwischenablage.
 - Steuerzeichen `00`–`1F` und `7F` sind als Code sichtbar und nicht kopierbar.
 

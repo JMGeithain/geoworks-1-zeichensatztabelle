@@ -21,6 +21,18 @@
 %define V_FDOPEN  0xB8
 %define V_FDSEL   0xBA
 %define V_FDSTART 0xBC
+%define V_ODS     0xC0
+%define V_OSI     0xC2
+%define VIS_CLASS 0x100
+%define VIS_RES   6
+%define VIS_CHUNK 0x22
+
+%macro VIS_ENTER 0
+ mov [es:V_ODS],ds
+ mov [es:V_OSI],si
+ push es
+ pop ds
+%endmacro
 %macro FONT_ROW 3
  mov ax,0
  cmp word [V_FDSEL],%1
@@ -65,9 +77,11 @@ G1_METHOD 0x0a01, app_open
 G1_METHOD 0x0a03, app_close
 G1_METHOD 0x0004, meta_attach
 G1_METHOD 0x0057, view_closed
-G1_METHOD 0x0049, view_exposed
-G1_METHOD 0x007b, kbd_char
-G1_METHOD 0x00c3, mouse_select
+vis_class_table:
+ db 'G1VISCLS'
+ dw 4
+ dw 0x2071,0x0049,0x007b,0x00c3
+ dw vis_draw,vis_exposed,vis_kbd_char,vis_start_select
 
 app_open:
  push es
@@ -95,41 +109,58 @@ view_closed:
  KCALL 489
  retf
 
-view_exposed:
- mov [V_WIN],cx
- mov di,cx
- KCALL 211                       ; GrCreateState
- KCALL 446                       ; GrBeginUpdate
+vis_draw:
+ VIS_ENTER
+ mov di,bp
  call paint_table
- KCALL 447                       ; GrEndUpdate
- KCALL 212                       ; GrDestroyState
+ jmp vis_ret
+
+vis_exposed:
+ VIS_ENTER
+ mov word [V_WIN],1
+ mov ax,0x0049
+ jmp vis_super
+
+vis_ret:
+ mov si,[V_OSI]
+ mov ds,[V_ODS]
  retf
 
-kbd_char:
+vis_super:
+ push ds
+ pop es
+ mov si,[V_OSI]
+ mov ds,[V_ODS]
+ mov di,VIS_CLASS
+ KCALL 489
+ retf
+
+vis_kbd_char:
+ VIS_ENTER
  cmp word [V_FDOPEN],0
  jne .font_dialog
  cmp ch,0xff
  jne .ascii
- test dl,0x81                    ; ignore releases and state keys
+ test dl,0x81
  jnz .pass
- cmp cl,0x90                     ; up
+ cmp cl,0x90
  je .up
- cmp cl,0x91                     ; down
+ cmp cl,0x91
  je .down
- cmp cl,0x92                     ; right
+ cmp cl,0x92
  je .right
- cmp cl,0x93                     ; left
+ cmp cl,0x93
  je .left
  jmp .pass
 .ascii:
  mov al,cl
  or al,0x20
+ cmp al,'f'
+ je .font_open
  cmp al,'c'
  je .copy
  cmp al,' '
  je .copy
- cmp al,'f'
- je .font_open
  jmp .pass
 .up:
  mov ax,[V_SEL]
@@ -154,12 +185,32 @@ kbd_char:
 .move:
  mov [V_SEL],ax
  call redraw
- retf
+ mov ax,0x8000
+ jmp vis_ret
 .font_open:
  call font_dialog_open
  mov word [V_FDOPEN],1
  call redraw
- retf
+ mov ax,0x8000
+ jmp vis_ret
+.copy:
+ mov al,[V_SEL]
+ cmp al,0x20
+ jb .copied
+ cmp al,0x7f
+ je .copied
+ mov [cs:charbuf],al
+ push ds
+ push cs
+ pop ds
+ mov si,charbuf
+ mov cx,1
+ mov dx,clip_name
+ call g1_clip_text
+ pop ds
+.copied:
+ mov ax,0x8000
+ jmp vis_ret
 .font_dialog:
  cmp ch,0xff
  jne .font_ascii
@@ -186,10 +237,6 @@ kbd_char:
  jz .font_eat
  dec ax
  mov [V_FDSEL],ax
- cmp ax,[V_FDSTART]
- jae .font_up_draw
- mov [V_FDSTART],ax
-.font_up_draw:
  call redraw
  jmp .font_eat
 .font_down:
@@ -198,13 +245,6 @@ kbd_char:
  cmp ax,4
  jae .font_eat
  mov [V_FDSEL],ax
- mov bx,[V_FDSTART]
- add bx,4
- cmp ax,bx
- jb .font_down_draw
- sub ax,3
- mov [V_FDSTART],ax
-.font_down_draw:
  call redraw
  jmp .font_eat
 .font_apply:
@@ -212,64 +252,44 @@ kbd_char:
  shl bx,1
  mov ax,[cs:font_ids+bx]
  mov [V_FONT],ax
- mov word [V_FDOPEN],0
- call redraw
- jmp .font_eat
 .font_cancel:
  mov word [V_FDOPEN],0
  call redraw
 .font_eat:
  mov ax,0x8000
- retf
-.copy:
- mov al,[V_SEL]
- cmp al,0x20
- jb .pass
- cmp al,0x7f
- je .pass
- mov [cs:charbuf],al
- push ds
- push cs
- pop ds
- mov si,charbuf
- mov cx,1
- mov dx,clip_name
- call g1_clip_text
- pop ds
- retf
+ jmp vis_ret
 .pass:
- mov di,PROCESS_CLASS
- KCALL 489
- retf
+ mov ax,0x007b
+ jmp vis_super
 
-mouse_select:
+vis_start_select:
+ VIS_ENTER
  cmp word [V_FDOPEN],0
- jne .font_mouse
+ jne .font_row
  cmp cx,450
- jb .grid_mouse
+ jb .grid
  cmp cx,560
- jae .grid_mouse
+ jae .grid
  cmp dx,4
- jb .grid_mouse
+ jb .grid
  cmp dx,50
- jae .grid_mouse
+ jae .grid
+ call font_dialog_open
  mov word [V_FDOPEN],1
- mov word [V_FDSEL],0
  call redraw
  mov ax,0x8000
- retf
-.grid_mouse:
- ; CX,DX are the pointer coordinates in the document view.
+ jmp vis_ret
+.grid:
  sub cx,GRID_X
  sub dx,GRID_Y
  cmp cx,0
- jl .ignored
+ jl .pass
  cmp dx,0
- jl .ignored
+ jl .pass
  cmp cx,512
- jae .ignored
+ jae .pass
  cmp dx,320
- jae .ignored
+ jae .pass
  mov ax,cx
  mov bl,CELL_W
  div bl
@@ -287,37 +307,37 @@ mouse_select:
  add ax,bx
  mov [V_SEL],ax
  call redraw
-.ignored:
- mov ax,0x8000                  ; MRF_PROCESSED
- retf
-.font_mouse:
+ mov ax,0x8000
+ jmp vis_ret
+.font_row:
  cmp cx,140
- jb .font_mouse_close
+ jb .font_cancel
  cmp cx,420
- jae .font_mouse_close
+ jae .font_cancel
  sub dx,146
  cmp dx,0
- jl .font_mouse_close
+ jl .font_cancel
  cmp dx,112
- jae .font_mouse_close
+ jae .font_cancel
  mov ax,dx
  mov bl,28
  div bl
  xor ah,ah
  cmp al,3
- ja .font_mouse_close
- cmp ax,3
- ja .font_mouse_close
+ ja .font_cancel
  mov [V_FDSEL],ax
  mov bx,ax
  shl bx,1
  mov ax,[cs:font_ids+bx]
  mov [V_FONT],ax
-.font_mouse_close:
+.font_cancel:
  mov word [V_FDOPEN],0
  call redraw
  mov ax,0x8000
- retf
+ jmp vis_ret
+.pass:
+ mov ax,0x00c3
+ jmp vis_super
 
 font_dialog_open:
  mov word [V_FDSEL],0
@@ -336,11 +356,12 @@ font_dialog_open:
  mov [V_FDSEL],si
 .done:
  ret
+
 redraw:
  cmp word [V_WIN],0
  je .done
- mov di,[V_WIN]
- KCALL 211
+ call begin_direct
+ jc .done
  KCALL 446
  call paint_table
  KCALL 447
@@ -348,6 +369,25 @@ redraw:
 .done:
  ret
 
+begin_direct:
+ push si
+ push bp
+ mov bx,VIS_RES
+ KCALL 150
+ mov si,VIS_CHUNK
+ mov ax,0x2063
+ mov di,0x8080
+ KCALL 169
+ mov di,bp
+ pop bp
+ pop si
+ or di,di
+ jz .no
+ clc
+ ret
+.no:
+ stc
+ ret
 ; AX/BX = point, DS:SI = bytes, CX = byte count. GState remains in DI.
 draw_text:
  push ds
@@ -637,7 +677,7 @@ font_button: db 'Schrift F'
 font_button_end:
 font_title: db 'Schriftart auswaehlen'
 font_title_end:
-build_stamp: db 'Build: 20261126-FONT4'
+build_stamp: db 'Build: 20261126-FONT5'
 build_stamp_end:
 font_hint: db 'Pfeile + Enter bestaetigen; Esc schliesst'
 font_hint_end:
@@ -651,6 +691,7 @@ font_ids: dw 0x0202,0x1000,0x1200,0x1a00
 
 %include "g1clip.inc"
 G1_FINISH
+
 
 
 

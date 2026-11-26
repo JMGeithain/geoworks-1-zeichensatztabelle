@@ -14,7 +14,8 @@ cd "$SDK"
 perl sdk.pl check --project "$HERE/app"
 perl sdk.pl build --project "$HERE/app"
 mkdir -p "$HERE/out"
+python3 "$HERE/tools/build_icon.py" "$HERE/icon/icon_zst.pcx" "$HERE/out/icon"
 SDK="$SDK" perl "$HERE/tools/postbuild.pl" \
-    "$SDK/build/zgtab/zgtab.geo" "$HERE/out/ZGTAB.GEO" 540 390
+    "$SDK/build/zgtab/zgtab.geo" "$HERE/out/ZGTAB.GEO" "$HERE/out/icon" 540 390
 echo "Built: $HERE/out/ZGTAB.GEO"
 

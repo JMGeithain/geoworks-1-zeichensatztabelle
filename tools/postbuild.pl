@@ -6,8 +6,8 @@ use PCGEOS::Geos1::Format qw(from_bytes);
 use PCGEOS::Geos1::Writer qw(build_geode);
 use PCGEOS::Ensemble12::Objects qw(object_block text_moniker SAME_BLOCK);
 
-my ($in, $out, $w, $h) = @ARGV;
-die "usage: postbuild.pl input.geo output.geo width height\n" unless $h;
+my ($in, $out, $icon_dir, $w, $h) = @ARGV;
+die "usage: postbuild.pl input.geo output.geo icon_dir width height\n" unless $h;
 sub slurp { open my $f, '<:raw', $_[0] or die "$_[0]: $!"; local $/; <$f> }
 sub set16 { my ($r,$at,$v)=@_; substr($$r,$at,2)=pack('v',$v) }
 sub base {
@@ -74,10 +74,8 @@ my ($fontmenu,$fontmenu_m,$fontmenu_hints)=(0x40,0x42,0x44);
 my @font_items=(['Berkeley',0x0c10],['Roman',0x0c11],['Sans',0x0c12],['Mono',0x0c13],
                 ['Weitere Schriften...',0x0c16]);
 my @font_chunks=map { [0x46+$_*4,0x48+$_*4] } 0..$#font_items;
-my $vh=0x66;
 my ($tb,$tb_hints)=(0x74,0x72);
 my $view=$mkview->([$filemenu,SAME_BLOCK]);
-set16(\$view,0x18,$vh);
 set16(\$view,0x2e,0xd010);
 set16(\$view,0x42,0x22);
 set16(\$view,0x44,0x1005);
@@ -90,8 +88,7 @@ my %chunks=(
     $filemenu_hints=>[pack('vv',0x4005,4),2],
     $fontmenu=>[base(80,sibling=>[$tb,SAME_BLOCK],child=>[$font_chunks[0][0],SAME_BLOCK],moniker=>$fontmenu_m,hints=>$fontmenu_hints).pack('C',2),3],
     $fontmenu_m=>[moniker('Schrift',5),2],
-    $fontmenu_hints=>[pack('vv',0x4005,4),2],
-    $vh=>[pack('v4',0x4015,4,0x4014,4),2]
+    $fontmenu_hints=>[pack('vv',0x4005,4),2]
 );
 # A real GEOS toolbar, with native GenTrigger buttons. GeoZeit uses the same
 # GenInteraction/GenTrigger pattern rather than drawing button-looking text.
@@ -126,6 +123,25 @@ my $chunk_count=($tb+2-0x20)/2;
 $chunk_count++ if $chunk_count%2;
 $res[3]{data}=object_block(3,\%chunks,$chunk_count);
 
+# Application icon monikers generated from the supplied icon_zst.pcx.
+my $token=pack('H*',substr($g->{token_hex},0,8));
+my $app=pack('v14',0x3000,71,0,8,0,0,0,0,0x24,0x1003,0x2a,0,0,0x4000);
+$app.="\0" x (198-length($app));
+set16(\$app,28,0x28); substr($app,30,4)=$token; substr($app,197,1)=pack('C',0x80);
+my @icon_types=([5,0x20c6],[6,0x20c1],[7,0x10c6],[8,0x10c1],[9,0x20e1],[10,0x10e1]);
+my $icon_list=pack('vvv',0x1081,0x26,0x4000);
+$icon_list.=pack('vvv',$_->[1],0x22,0x1000|$_->[0]) for @icon_types;
+$res[4]{data}=object_block(4,{
+    0x24=>[$app,3], 0x26=>[text_moniker($g->{long_name}),2],
+    0x28=>[pack('v4',0x24,0x1003,0,0),2], 0x2a=>[$icon_list,2]
+},6);
+for my $it (@icon_types) {
+    my ($resid)=@$it;
+    my $blk=object_block($resid,{0x22=>[slurp("$icon_dir/mon_$resid.bin"),2]},2);
+    substr($blk,4,2)=pack('v',0xc000);
+    push @res,{data=>$blk,flags=>0x1c7a,relocations=>[[0x23,0,0]]};
+}
+
 my $inst=pack('H*','01600000060000000000f3018f01d878f000000000000000000000000000000000020000000000000046000d1000000000000000000000000000aa00a900000000000000ac00ab00000000000000b200b100000000000000b400b300');
 my $at=index($inst,pack('vv',0x46,0x100d));
 die "view link not found in the Vis instance\n" if $at<0;
@@ -146,5 +162,5 @@ my $new=build_geode(
 );
 open my $f,'>:raw',$out or die "$out: $!";
 print $f $new->{raw}; close $f;
-printf "%s: %d bytes, %d resources, Vis input class installed\n",$out,length($new->{raw}),scalar @res;
+printf "%s: %d bytes, %d resources, Vis input class and application icon installed\n",$out,length($new->{raw}),scalar @res;
 

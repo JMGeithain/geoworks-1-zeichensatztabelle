@@ -366,6 +366,12 @@ vis_start_select:
  mov ax,dx
  mov bl,CELL_H
  div bl
+ ; The GEOS start-select coordinate is one row below the glyph origin.
+ ; Keep the first row selectable and correct the following rows.
+ or al,al
+ jz .row_aligned
+ dec al
+.row_aligned:
  mov [V_ROW],al
  xor ax,ax
  mov al,[V_ROW]
@@ -1078,7 +1084,7 @@ charbuf: db 0
 clip_name: db 'Zeichensatz Tabelle',0
 font_title: db 'Weitere Schriften'
 font_title_end:
-build_stamp: db 'Build: 20261126-FONT15'
+build_stamp: db 'Build: 20261126-VGA1'
 build_stamp_end:
 font_label: db 'Zeichensatz:'
 font_label_end:

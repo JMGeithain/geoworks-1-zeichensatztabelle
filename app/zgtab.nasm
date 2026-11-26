@@ -659,7 +659,7 @@ paint_table:
  mov bl,ah
  mov al,[cs:hexchars+bx]
  mov [cs:codebuf+1],al
- mov ax,74
+ mov ax,94
  mov bx,42
  mov si,codebuf
  mov cx,2
@@ -1158,7 +1158,7 @@ charbuf: db 0
 clip_name: db 'Zeichensatz Tabelle',0
 font_title: db 'Weitere Schriften'
 font_title_end:
-build_stamp: db 'Build: 20261126-VGA8-HELP'
+build_stamp: db 'Build: 20261126-VGA9-SELECT'
 build_stamp_end:
 font_label: db 'Schriftart:'
 font_label_end:

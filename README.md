@@ -5,7 +5,7 @@ Native 8086-Anwendung für das Ensemble 1.2 Profil des
 GEOS-Bytewerte `00` bis `FF` als 16×16-Raster. Druckbare Zeichen werden in der
 ausgewählten Schrift und vergrößert gezeichnet. In den Rasterzellen erscheinen
 keine Hexcodes; der Code des markierten Zeichens steht unten neben der Auswahl.
-Status, Buildkennung und das Label „Schrift:“ bleiben in Berkeley. Der Name der
+Status, Buildkennung und das Label „Zeichensatz:“ bleiben in Berkeley. Der Name der
 aktiven Schrift wird größer in dieser Schrift dargestellt.
 
 ## Bedienung
@@ -20,11 +20,10 @@ aktiven Schrift wird größer in dieser Schrift dargestellt.
 - **C** oder **Leertaste** kopiert ein druckbares Zeichen in die Zwischenablage.
 - Steuerzeichen `00`–`1F` und `7F` sind als Code sichtbar und nicht kopierbar.
 - **Datei** enthält Zeichentabelle, Zeichen kopieren, Info und Hilfe.
-- Unter dem Raster gibt es zusätzlich den Knopf **Zeichen kopieren**. Die
-  Schriftzeile zeigt den Namen der ausgewählten Schrift groß in deren Schrift;
+- Unter dem Raster gibt es zusätzlich echte GEOS-Schaltflächen für **Weitere
+  Schriften** und **Zeichen kopieren**. Die Schriftzeile zeigt den Namen der ausgewählten Schrift groß in deren Schrift;
   bei LED- und Symbolfonts bleibt der Name zur Lesbarkeit in Berkeley.
 - Die Buildkennung steht nur auf der Info-Seite.
-- **Nächste Schrift** und **Vorige Schrift** blättern durch die Fontliste.
 - Die Fontliste enthält 105 unterschiedliche Font-IDs aus den bei dieser
   Installation vorhandenen `.FNT`-Dateien. Sie ist ein Snapshot; neue
   Fontdateien erfordern eine Aktualisierung von `app/fontlist.inc`.

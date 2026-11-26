@@ -13,15 +13,21 @@ aktiven Schrift wird größer in dieser Schrift dargestellt.
 - Zelle mit der Maus oder den Pfeiltasten auswählen.
 - Das native Menü **Schrift** in der GeoWorks-Menüleiste enthält die Einträge
   **Berkeley**, **Roman**, **Sans** und **Mono**. Wähle einen Eintrag, um die
-  Zeichentabelle mit dieser Schrift neu aufzubauen. Die gewählte Schrift wird
-  unten neben der Build-Kennung angezeigt.
+  Zeichentabelle mit dieser Schrift neu aufzubauen. **Weitere Schriften...**
+  öffnet die scrollbare Schriftenliste mit Vorschau, **Übernehmen** und
+  **Schließen**. Die Fontnamen stammen aus der installierten `FONT`- und
+  `FONT_EURO`-Dateiliste der hier verwendeten GeoWorks-Installation.
 - **C** oder **Leertaste** kopiert ein druckbares Zeichen in die Zwischenablage.
 - Steuerzeichen `00`–`1F` und `7F` sind als Code sichtbar und nicht kopierbar.
 - **Datei** enthält Zeichentabelle, Zeichen kopieren, Info und Hilfe.
-- **Nächste Schrift** und **Vorige Schrift** blättern durch die vier derzeit
-  angebotenen Schriften. Symbol- und LED-Schriften werden noch nicht automatisch
-  aus dem installierten Font-Verzeichnis ermittelt; für einen solchen Fontnamen
-  wäre Berkeley als lesbare Ersatzschrift vorgesehen.
+- Unter dem Raster gibt es zusätzlich den Knopf **Zeichen kopieren**. Die
+  Schriftzeile zeigt den Namen der ausgewählten Schrift groß in deren Schrift;
+  bei LED- und Symbolfonts bleibt der Name zur Lesbarkeit in Berkeley.
+- Die Buildkennung steht nur auf der Info-Seite.
+- **Nächste Schrift** und **Vorige Schrift** blättern durch die Fontliste.
+- Die Fontliste enthält 105 unterschiedliche Font-IDs aus den bei dieser
+  Installation vorhandenen `.FNT`-Dateien. Sie ist ein Snapshot; neue
+  Fontdateien erfordern eine Aktualisierung von `app/fontlist.inc`.
 
 Die Zeichentabelle zeigt die Bytewerte des deutschen GeoWorks-1-Zielsystems.
 Sie ist keine Unicode-Tabelle.
